@@ -1,10 +1,10 @@
-import { load, store, stats, dutyToday } from './store.js';
-import { $, ic, icons, toast, modal } from './ui.js';
-import * as client from './views/client.js?v=request3';
-import * as duty from './views/duty.js?v=request3';
-import * as master from './views/master.js';
-import * as owner from './views/owner.js';
-import * as receipt from './views/receipt.js?v=request3';
+import { load, store, stats, dutyToday } from './store.js?v=202609200053';
+import { $, ic, icons, toast, modal } from './ui.js?v=202609200053';
+import * as client from './views/client.js?v=202609200053';
+import * as duty from './views/duty.js?v=202609200053';
+import * as master from './views/master.js?v=202609200053';
+import * as owner from './views/owner.js?v=202609200053';
+import * as receipt from './views/receipt.js?v=202609200053';
 
 const NAV = [
   ['home', 'Сценарий', 'play-circle'],
