@@ -1,0 +1,14 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow">
+<title>Показ: Alim Service</title><link rel="stylesheet" href="demo/css/fonts.css"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0e0e0e">
+<style>body{margin:0;font-family:Onest,system-ui,sans-serif;background:#0e0e0e;color:#fff;min-height:100vh;display:grid;place-items:center;padding:24px;box-sizing:border-box}main{max-width:760px;width:100%}
+h1{font-family:Unbounded,sans-serif;font-size:28px;margin:0 0 8px}p{color:#a3a3a3;margin:0 0 24px;line-height:1.5}.g{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:600px){.g{grid-template-columns:1fr}}
+a.c{display:block;background:#1b1b1b;border:1px solid #2a2a2a;border-radius:22px;padding:24px;color:#fff;text-decoration:none}a.c b{display:block;font-family:Unbounded,sans-serif;font-size:19px;margin-bottom:6px}a.c small{color:#a3a3a3;font-size:14.5px;line-height:1.4}
+button{margin-top:22px;min-height:54px;padding:0 24px;border-radius:14px;border:0;background:#ffc61a;color:#0e0e0e;font:600 16px Onest,system-ui,sans-serif;cursor:pointer}#st{margin-top:14px;font-size:14.5px;color:#a3a3a3;min-height:22px}</style></head>
+<body><main><h1>Показ для Alim Service</h1><p>Демонстрационная копия. Данные в системе примерные.</p>
+<div class="g"><a class="c" href="site/"><b>Сайт</b><small>Новый сайт Alim Service</small></a><a class="c" href="demo/"><b>Система</b><small>Бот, дежурный, приёмка, квитанция, экран владельца</small></a></div>
+<button id="dl" type="button">Скачать для показа без интернета</button><div id="st"></div></main>
+<script>
+const st=document.getElementById('st');
+if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(async()=>{const c=await caches.open('alim-show-v1');const k=await c.keys();if(k.length>20)st.textContent='Сохранено на устройстве: '+k.length+' файлов. Работает без интернета.'})}else st.textContent='Этот браузер не умеет работать без интернета.';
+document.getElementById('dl').onclick=async()=>{try{st.textContent='Скачиваю…';await navigator.serviceWorker.ready;const files=await (await fetch('files.json',{cache:'no-store'})).json();const c=await caches.open('alim-show-v1');let n=0;for(const f of files){try{await c.add(new Request(f,{cache:'reload'}))}catch(e){}n++;if(n%10===0)st.textContent='Скачиваю… '+n+' из '+files.length}st.textContent='Готово: '+files.length+' файлов сохранено. Теперь всё открывается без интернета.'}catch(e){st.textContent='Не получилось: '+e.message}};
+</script></body></html>

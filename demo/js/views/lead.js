@@ -1,0 +1,124 @@
+// Карточка заявки: используется и у дежурного, и рядом с клиентским чатом
+import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js';
+import { store, branch, replyLead, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js';
+import { esc, ic, hm, elapsed, dayLabel, toast, icons } from '../ui.js';
+
+export function slaOf(lead) {
+  if (lead.firstResponseAt) return { cls: 'ok', label: 'Отвечено за ' + Math.round(respMin(lead)) + ' мин' };
+  const start = slaStart(lead);
+  if (Date.now() < start) return { cls: 'ok', label: 'Пришла вне графика. Отсчёт 15 минут начнётся в 10:00', off: true };
+  const m = (Date.now() - start) / MIN;
+  const d = dutyToday();
+  if (m < 15) return { cls: 'ok', label: 'Норма: 15 минут', live: true };
+  if (m < 30) return { cls: 'warn', label: `Передано запасному: ${d.backup.name}`, live: true };
+  return { cls: 'bad', label: 'Передано владельцу', live: true };
+}
+
+export function slots(lead) {
+  const base = new Date(); base.setSeconds(0, 0);
+  if (lead.when === 'tomorrow') { base.setDate(base.getDate() + 1); base.setHours(11, 0); return [0, 3, 5].map(h => base.getTime() + h * HOUR); }
+  let h = base.getHours() + 1;
+  if (h < 10) h = 10;
+  if (h > 17) { base.setDate(base.getDate() + 1); h = 10; }
+  base.setHours(h, 0);
+  return [0, 1.5, 3].map(x => base.getTime() + x * HOUR).filter(t => new Date(t).getHours() < 19);
+}
+
+export function leadCard(lead, { compact = false } = {}) {
+  const p = priceFor(lead.device, lead.problem);
+  const sla = slaOf(lead);
+  const src = SOURCES[lead.source];
+  const b = branch(lead.branch);
+  const opts = [];
+  if (p.copy) opts.push({ k: 'copy', label: 'Копия', price: p.copy });
+  if (p.orig) opts.push({ k: 'orig', label: p.copy ? 'Оригинал' : 'Стоимость', price: p.orig });
+  if (p.from) opts.push({ k: 'from', label: 'От', price: p.from });
+  const booked = lead.booking;
+  const canQuote = lead.status === 'new';
+
+  return `
+  <div class="lead-card" data-lead="${lead.id}">
+    <div class="lead-top">
+      <div>
+        <div class="lead-no">Заявка №${lead.no}</div>
+        <h3>${esc(lead.device)} · ${esc(PROBLEMS[lead.problem].ru)}</h3>
+      </div>
+      <div class="sla ${sla.cls}">
+        ${sla.live ? `<b data-timer="${slaStart(lead)}">${elapsed(slaStart(lead))}</b>` : ic(sla.off ? 'moon' : 'check')}
+        <span>${esc(sla.label)}</span>
+      </div>
+    </div>
+
+    <div class="lead-meta">
+      <span class="chip" style="--c:${src.color}"><i class="dotc"></i>${src.label}</span>
+      <span class="chip">${ic('map-pin')}${esc(b.short)}</span>
+      <span class="chip">${ic('languages')}${lead.lang === 'kz' ? 'Қазақша' : 'Русский'}</span>
+      <span class="chip">${ic('clock')}${lead.when === 'today' ? 'Хочет сегодня' : lead.when === 'tomorrow' ? 'Хочет завтра' : 'Время не выбрано'}</span>
+    </div>
+
+    <div class="lead-body">
+      ${lead.photo ? `<img class="lead-photo" src="${esc(lead.photo)}" alt="Фото поломки">` : `<div class="lead-photo none">${ic('image-off')}<span>Без фото</span></div>`}
+      <dl>
+        <dt>Клиент</dt><dd>${esc(lead.client.name)} · <a href="tel:${esc(lead.client.phone)}">${esc(lead.client.phone)}</a></dd>
+        <dt>Пришла</dt><dd>${hm(lead.createdAt)}, ${dayLabel(lead.createdAt)}</dd>
+        <dt>Собрал бот</dt><dd>модель, поломка, филиал${lead.photo ? ', фото' : ''} — переспрашивать не нужно</dd>
+      </dl>
+    </div>
+
+    ${canQuote ? `
+    <div class="quote">
+      <div class="quote-h">${ic('tag')}Цена из прайса <small>демо-данные</small></div>
+      <div class="quote-opts">
+        ${opts.map((o, i) => `<label class="qopt"><input type="radio" name="q-${lead.id}" value="${o.k}" data-price="${o.price}" data-label="${o.label}" ${i === 0 ? 'checked' : ''}><span><em>${o.label}</em><b>${fmt(o.price)}</b></span></label>`).join('')}
+        <label class="qopt custom"><input type="radio" name="q-${lead.id}" value="custom"><span><em>Своя цена</em><input type="number" inputmode="numeric" placeholder="₸" data-custom></span></label>
+      </div>
+      <div class="quote-f">${ic('timer')}${esc(p.time)} · гарантия ${p.warranty} мес${p.diag ? ' · диагностика бесплатно' : ''}</div>
+      <button class="btn primary block" data-act="quote">${ic('send')}Отправить цену и время записи</button>
+      ${compact ? '' : `<button class="btn ghost block" data-act="call">${ic('phone')}Позвонить клиенту</button>`}
+    </div>` : ''}
+
+    ${lead.status === 'answered' && !booked ? `<div class="note">${ic('hourglass')}Цена ${fmt(lead.quote || 0)} отправлена в ${hm(lead.firstResponseAt)}. Ждём, когда клиент выберет время.</div>` : ''}
+    ${booked ? `<div class="note ok">${ic('calendar-check')}Записан: ${esc(branch(booked.branch).short)}, ${dayLabel(booked.ts)} в ${hm(booked.ts)}. Заявка уже у мастера точки.</div>` : ''}
+    ${lead.status === 'converted' ? `<div class="note ok">${ic('check-circle-2')}Стала заказом</div>` : ''}
+    ${lead.status === 'lost' ? `<div class="note bad">${ic('user-x')}Потеряна: клиент не дождался ответа</div>` : ''}
+  </div>`;
+}
+
+export function quoteText(lead, label, price) {
+  const p = priceFor(lead.device, lead.problem);
+  const b = branch(lead.branch);
+  if (lead.lang === 'kz') {
+    return `${lead.device}, ${PROBLEMS[lead.problem].kz.toLowerCase()}.\n${label === 'От' ? 'Бағасы' : label}: ${label === 'От' ? 'шамамен ' : ''}${fmt(price)}\nУақыты: ${p.timeKz} · кепілдік ${p.warranty} ай\n${b.name}, ${b.addr}\nҚай уақытта келесіз?`;
+  }
+  return `${lead.device}, ${PROBLEMS[lead.problem].ru.toLowerCase()}.\n${label === 'От' ? 'Ориентировочно от' : label + ':'} ${fmt(price)}\nСрок: ${p.time} · гарантия ${p.warranty} мес${p.diag ? '\nДиагностика бесплатно, точную цену назовём после неё.' : ''}\n${b.name}, ${b.addr}\nНа какое время вас записать?`;
+}
+
+// Общая обработка кнопок карточки
+export function bindLeadCard(root, rerender) {
+  root.addEventListener('click', e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const card = btn.closest('[data-lead]');
+    if (!card) return;
+    const lead = store.s.leads.find(l => l.id === card.dataset.lead);
+    if (!lead) return;
+    if (btn.dataset.act === 'quote') {
+      const r = card.querySelector(`input[name="q-${lead.id}"]:checked`);
+      let price = +r?.dataset.price, label = r?.dataset.label || 'Стоимость';
+      if (r?.value === 'custom') { price = +card.querySelector('[data-custom]').value; label = 'Стоимость'; }
+      if (!price) { toast('Укажите цену', 'alert-circle'); return; }
+      lead.quote = price;
+      replyLead(lead, quoteText(lead, label, price), { slots: slots(lead) });
+      toast(`Цена отправлена клиенту · ответ за ${Math.round(respMin(lead))} мин`);
+      rerender();
+    }
+    if (btn.dataset.act === 'call') toast('Звонок: ' + lead.client.phone, 'phone');
+  });
+  root.addEventListener('focusin', e => { if (e.target.matches('[data-custom]')) e.target.closest('label').querySelector('input[type=radio]').checked = true; });
+}
+
+export function tickTimers(root) {
+  root.querySelectorAll('[data-timer]').forEach(el => { el.textContent = elapsed(+el.dataset.timer); });
+}
+
+export { bookLead, BRANCHES, icons };
