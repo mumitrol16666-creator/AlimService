@@ -1,8 +1,9 @@
+import { requestLang, saveRequestLang } from '../request-copy.js';
 import { STATUSES } from '../data.js';
 import { store, branch, staff, unpackOrder, receiptUrl, DAY } from '../store.js';
 import { esc, ic, icons, money, hm, dm, dmy, qrSvg } from '../ui.js';
 
-let lang = 'ru';
+let lang = requestLang();
 const L = {
   ru: { title: 'Квитанция', status: 'Статус ремонта', dev: 'Устройство', defect: 'Неисправность', cond: 'Состояние при приёме', none: 'без замечаний', works: 'Работы', total: 'Итого', prepaid: 'Предоплата', due: 'К оплате при получении', paid: 'Оплачено полностью', deadline: 'Срок готовности', warranty: 'Гарантия', months: 'мес', until: 'до', where: 'Где забрать', master: 'Мастер', call: 'Позвонить', route: 'Маршрут', print: 'Печать', back: 'Вернуться в систему', notfound: 'Квитанция не найдена', terms: 'Гарантия действует на выполненные работы и установленные детали. Не распространяется на механические повреждения и попадание влаги после ремонта. Сохраняйте эту ссылку — она заменяет бумажную квитанцию.', demo: 'Демо-квитанция. Не является фискальным чеком.', hours: 'Ежедневно 10:00–19:00' },
   kz: { title: 'Түбіртек', status: 'Жөндеу күйі', dev: 'Құрылғы', defect: 'Ақаулық', cond: 'Қабылдау кезіндегі күйі', none: 'ескертусіз', works: 'Жұмыстар', total: 'Барлығы', prepaid: 'Алдын ала төлем', due: 'Алған кезде төленеді', paid: 'Толық төленді', deadline: 'Дайын болу мерзімі', warranty: 'Кепілдік', months: 'ай', until: 'дейін', where: 'Қайдан алуға болады', master: 'Шебер', call: 'Қоңырау шалу', route: 'Бағыт', print: 'Басып шығару', back: 'Жүйеге оралу', notfound: 'Түбіртек табылмады', terms: 'Кепілдік орындалған жұмыстар мен орнатылған бөлшектерге беріледі. Жөндеуден кейінгі механикалық зақымдар мен ылғал тиюге қолданылмайды. Осы сілтемені сақтаңыз — ол қағаз түбіртекті алмастырады.', demo: 'Демо-түбіртек. Фискалдық чек емес.', hours: 'Күн сайын 10:00–19:00' },
@@ -20,7 +21,7 @@ export function mount(el, params) {
     const wEnd = (o.paidAt || o.deadline) + o.warranty * 30 * DAY;
     el.innerHTML = `
     <div class="rc-page">
-      <div class="rc-bar">${o.shared ? '<span></span>' : `<a class="btn ghost sm" href="#/master">${ic('arrow-left')}${t.back}</a>`}<div class="seg sm"><button class="${lang === 'ru' ? 'on' : ''}" data-lang="ru">RU</button><button class="${lang === 'kz' ? 'on' : ''}" data-lang="kz">KZ</button></div></div>
+      <div class="rc-bar">${o.shared ? '<span></span>' : `<a class="btn ghost sm" href="#/master">${ic('arrow-left')}${t.back}</a>`}<div class="seg sm"><button class="${lang === 'ru' ? 'on' : ''}" data-lang="ru">RU</button><button class="${lang === 'kz' ? 'on' : ''}" data-lang="kz">ҚАЗ</button></div></div>
       <article class="rc">
         <header><img src="img/alim-mark.svg" alt=""><div><b>Alim Service</b><small>${esc(b.name)} · ${esc(b.addr)}</small></div><div class="rc-no"><small>${t.title}</small><b>№${o.no}</b><small>${dmy(o.createdAt)} ${hm(o.createdAt)}</small></div></header>
 
@@ -55,7 +56,7 @@ export function mount(el, params) {
   };
   draw();
   el.addEventListener('click', e => {
-    const l = e.target.closest('[data-lang]'); if (l) { lang = l.dataset.lang; draw(); }
+    const l = e.target.closest('[data-lang]'); if (l) { lang = l.dataset.lang; saveRequestLang(lang); draw(); }
     if (e.target.closest('[data-print]')) window.print();
   });
 }

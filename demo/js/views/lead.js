@@ -1,3 +1,4 @@
+import { modelLabel, branchLabel, branchAddress } from '../request-copy.js';
 // Карточка заявки: используется и у дежурного, и рядом с клиентским чатом
 import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js';
 import { store, branch, takeLead, openLeadWhatsApp, confirmReply, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js';
@@ -92,7 +93,9 @@ export function quoteText(lead, label, price) {
   const p = priceFor(lead.device, lead.problem);
   const b = branch(lead.branch);
   if (lead.lang === 'kz') {
-    return `${lead.device}, ${PROBLEMS[lead.problem].kz.toLowerCase()}.\n${label === 'От' ? 'Бағасы' : label}: ${label === 'От' ? 'шамамен ' : ''}${fmt(price)}\nУақыты: ${p.timeKz} · кепілдік ${p.warranty} ай\n${b.name}, ${b.addr}\nҚай уақытта келесіз?`;
+    const priceLabel = { 'От': 'Бастапқы баға', 'Копия': 'Баламалы бөлшек', 'Оригинал': 'Түпнұсқа', 'Стоимость': 'Бағасы' }[label] || 'Бағасы';
+    const place = lead.branch ? `${branchLabel(b, 'kz')}, ${branchAddress(b, 'kz')}` : 'Ыңғайлы филиалды бірге таңдаймыз.';
+    return `${modelLabel(lead.device, 'kz')}, ${PROBLEMS[lead.problem].kz.toLowerCase()}.\n${priceLabel}: ${fmt(price)}\nУақыты: ${p.timeKz} · кепілдік ${p.warranty} ай\n${place}\nҚай уақытта келесіз?`;
   }
   return `${lead.device}, ${PROBLEMS[lead.problem].ru.toLowerCase()}.\n${label === 'От' ? 'Ориентировочно от' : label + ':'} ${fmt(price)}\nСрок: ${p.time} · гарантия ${p.warranty} мес${p.diag ? '\nДиагностика бесплатно, точную цену назовём после неё.' : ''}\n${b.name}, ${b.addr}\nНа какое время вас записать?`;
 }
