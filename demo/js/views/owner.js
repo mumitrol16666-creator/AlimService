@@ -12,7 +12,7 @@ function draw() {
   const days = period === 'today' ? 1 : period === 'week' ? 7 : 30;
   const convRate = st.leads.length ? st.converted.length / st.leads.length : 0;
   const lostMoney = st.lost.length * (st.avgCheck || 25000);
-  const newLeads = store.s.leads.filter(l => l.status === 'new' && (Date.now() - slaStart(l)) > 15 * MIN);
+  const newLeads = store.s.leads.filter(l => (!bId || l.branch === bId) && l.status === 'new' && (Date.now() - slaStart(l)) > 15 * MIN);
 
   // Источники
   const bySrc = Object.keys(SOURCES).map(k => {
@@ -45,7 +45,7 @@ function draw() {
     <div class="kpi"><small>Заказов принято</small><b>${st.orders.length}</b><span>${st.open.length} сейчас в работе</span></div>
     <div class="kpi"><small>Предоплаты на руках</small><b>${money(st.prepaidHeld)}</b><span>по ${st.open.filter(o => o.prepaid).length} открытым заказам</span></div>
     <div class="kpi"><small>Заявок из каналов</small><b>${st.leads.length}</b><span>${Math.round(convRate * 100)}% стали заказами</span></div>
-    <div class="kpi"><small>Средний ответ клиенту</small><b class="${st.avgResp > 15 ? 'warn' : 'good'}">${Math.round(st.avgResp)} мин</b><span>норма — 15 минут</span></div>
+    <div class="kpi"><small>Ответ по отметке мастера</small><b class="${st.avgResp > 15 ? 'warn' : 'good'}">${Math.round(st.avgResp)} мин</b><span>доставка не подтверждается</span></div>
     <div class="kpi"><small>Готовы, ждут клиента</small><b>${st.open.filter(o => o.status === 'ready').length}</b><span>к получению ${money(st.open.filter(o => o.status === 'ready').reduce((a, o) => a + o.total - o.prepaid, 0))}</span></div>
     <div class="kpi bad"><small>Потеряно заявок</small><b>${st.lost.length}</b><span>≈ ${moneyShort(lostMoney)} недополучено</span></div>
   </div>
@@ -54,7 +54,7 @@ function draw() {
     <h2>${ic('siren')}Требует внимания</h2>
     <div class="att">
       ${st.hanging.map(o => `<a class="att-i bad" href="#/r/${o.no}">${ic('notebook-pen')}<div><b>Предоплата ${money(o.prepaid)} лежит ${Math.floor((Date.now() - o.createdAt) / DAY)} дней, деталь не заказана</b><small>№${o.no} · ${esc(o.device)} · ${esc(o.client.name)} ${esc(o.client.phone)} · ${esc(branch(o.branch).short)}</small></div></a>`).join('')}
-      ${newLeads.map(l => `<a class="att-i warn" href="#/duty">${ic('message-circle-warning')}<div><b>Клиент ждёт ответа ${Math.floor((Date.now() - slaStart(l)) / MIN)} минут</b><small>Заявка №${l.no} · ${esc(l.device)} · ${SOURCES[l.source].label} · ${esc(branch(l.branch).short)}</small></div></a>`).join('')}
+      ${newLeads.map(l => `<a class="att-i warn" href="#/duty">${ic('message-circle-warning')}<div><b>Нет отметки ответа ${Math.floor((Date.now() - slaStart(l)) / MIN)} минут</b><small>Заявка №${l.no} · ${esc(l.device)} · ${SOURCES[l.source].label} · ${esc(branch(l.branch).short)}</small></div></a>`).join('')}
       ${st.overdue.slice(0, 3).map(o => `<a class="att-i warn" href="#/r/${o.no}">${ic('alarm-clock')}<div><b>Срок ремонта прошёл ${ago(o.deadline)}</b><small>№${o.no} · ${esc(o.device)} · ${esc(staff(o.master)?.name || '')} · ${esc(branch(o.branch).short)}</small></div></a>`).join('')}
       ${!st.hanging.length && !newLeads.length && !st.overdue.length ? `<div class="empty"><p>Всё под контролем</p></div>` : ''}
     </div>
@@ -87,8 +87,8 @@ function draw() {
       </div>
     </section>
     <section class="card">
-      <h2>${ic('timer')}Скорость ответа и мастера</h2>
-      <table class="tbl"><thead><tr><th>Мастер</th><th>Средний ответ</th><th>Заказов</th><th>Выручка</th></tr></thead><tbody>
+      <h2>${ic('timer')}Отметки ответа и мастера</h2>
+      <table class="tbl"><thead><tr><th>Мастер</th><th>До отметки</th><th>Заказов</th><th>Выручка</th></tr></thead><tbody>
       ${byMaster.map(x => `<tr><td>${esc(x.m.name)}<small class="tsub">${esc(branch(x.m.branch).short)} · ${x.n} ответов</small></td><td class="${x.avg > 15 ? 'red' : ''}">${x.n ? Math.round(x.avg) + ' мин' : '—'}</td><td>${x.orders}</td><td><b>${moneyShort(x.rev)}</b></td></tr>`).join('')}
       </tbody></table>
       <div class="ch sm"><canvas id="c-prob"></canvas></div>

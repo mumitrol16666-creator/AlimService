@@ -1,5 +1,5 @@
 import { BRANCHES, STAFF, PROBLEMS, STATUSES, SOURCES, CONDITIONS, DEVICES, priceFor } from '../data.js';
-import { store, branch, staff, workFor, createOrder, setStatus, notify, receiptUrl, MIN, HOUR, DAY } from '../store.js';
+import { store, branch, staff, workFor, createOrder, setStatus, notify, receiptUrl, whatsappUrl, MIN, HOUR, DAY } from '../store.js';
 import { $, $$, esc, ic, icons, hm, dm, dayLabel, ago, money, toast, modal, qrSvg, shrinkImage } from '../ui.js';
 
 let root, tab = 'today', bId = null, form = null, filter = 'active', q = '';
@@ -92,7 +92,7 @@ function parts() {
   };
   return `<div class="cols2">
     <section class="card"><h2>${ic('shopping-cart')}Нужно заказать <i>${need.length}</i></h2><p class="muted">Общий список по всем филиалам — одна закупка вместо блокнота в каждой точке.</p>${need.length ? need.map(prow).join('') : `<div class="empty"><p>Всё заказано</p></div>`}</section>
-    <section class="card"><h2>${ic('truck')}В пути <i>${ordered.length}</i></h2><p class="muted">Когда деталь пришла, клиент получает сообщение автоматически.</p>${ordered.length ? ordered.map(prow).join('') : `<div class="empty"><p>Пусто</p></div>`}</section>
+    <section class="card"><h2>${ic('truck')}В пути <i>${ordered.length}</i></h2><p class="muted">Когда деталь пришла, система готовит текст для ручной отправки в WhatsApp.</p>${ordered.length ? ordered.map(prow).join('') : `<div class="empty"><p>Пусто</p></div>`}</section>
   </div>`;
 }
 
@@ -104,7 +104,7 @@ function intake() {
   const tot = total(f);
   const models = [...DEVICES.iphone.models, 'Galaxy A-серия', 'Galaxy S-серия', 'Redmi Note'];
   return `<form class="intake" id="intake" autocomplete="off">
-    ${lead ? `<div class="note ok">${ic('sparkles')}Заявка №${lead.no} · ${SOURCES[lead.source].label}. Данные уже заполнил бот. Проверьте и нажмите «Оформить».</div>` : ''}
+    ${lead ? `<div class="note ok">${ic('sparkles')}Заявка №${lead.no} · ${SOURCES[lead.source].label}. Данные перенесены из заявки. Проверьте и нажмите «Оформить».</div>` : ''}
     <div class="cols2">
       <section class="card">
         <h2>${ic('user')}Клиент</h2>
@@ -138,7 +138,7 @@ function intake() {
         <div class="pick">${STAFF.filter(s => s.branch === bId).map(s => `<button type="button" class="${f.master === s.id ? 'on' : ''}" data-master="${s.id}">${ic('user')}${esc(s.name)}</button>`).join('')}</div>
       </section>
     </div>
-    <div class="intake-bar"><div><small>${esc(f.device || 'Устройство не выбрано')}</small><b>${money(tot)} · предоплата ${money(f.prepaid)}</b></div><button class="btn primary lg">${ic('receipt')}Оформить и отправить квитанцию</button></div>
+    <div class="intake-bar"><div><small>${esc(f.device || 'Устройство не выбрано')}</small><b>${money(tot)} · предоплата ${money(f.prepaid)}</b></div><button class="btn primary lg">${ic('receipt')}Оформить квитанцию</button></div>
   </form>`;
 }
 
@@ -147,7 +147,7 @@ function orderModal(o) {
   const flow = ['accepted', ...(o.parts.length ? ['waiting'] : []), 'work', 'ready', 'issued'];
   const idx = flow.indexOf(o.status);
   const next = flow[idx + 1];
-  const nextLabel = { waiting: 'Ждём деталь', work: 'Взять в работу', ready: 'Готов — сообщить клиенту', issued: remaining(o) ? `Выдать и принять ${money(remaining(o))}` : 'Выдать клиенту' }[next];
+  const nextLabel = { waiting: 'Ждём деталь', work: 'Взять в работу', ready: 'Отметить готовность', issued: remaining(o) ? `Выдать и принять ${money(remaining(o))}` : 'Выдать клиенту' }[next];
   const m = modal(`
     <div class="om">
       <div class="om-h"><div><small>Заказ №${o.no} · ${esc(branch(o.branch).name)} · ${dm(o.createdAt)} ${hm(o.createdAt)}</small><h2>${esc(o.device)}</h2><p>${esc(o.defect)}</p></div>${badge(o.status)}</div>
@@ -160,8 +160,8 @@ function orderModal(o) {
         </div>
         <div>
           <div class="bill">${o.works.map(w => `<div><span>${esc(w.name)}</span><b>${money(w.price)}</b></div>`).join('')}<div class="tot"><span>Итого</span><b>${money(o.total)}</b></div><div><span>Предоплата (${{ kaspi: 'Kaspi', cash: 'наличные', card: 'карта' }[o.payMethod]})</span><b>${money(o.prepaid)}</b></div><div class="tot"><span>${o.status === 'issued' ? 'Оплачено полностью' : 'К оплате'}</span><b>${o.status === 'issued' ? money(o.total) : money(remaining(o))}</b></div></div>
-          <h3 class="mt">${ic('message-circle')}Что получил клиент</h3>
-          <div class="log">${o.notified.length ? o.notified.map(n => `<div><time>${hm(n.ts)}</time><p>${esc(n.text).replace(/\n/g, '<br>')}</p></div>`).join('') : '<p class="muted">Сообщений ещё не было</p>'}</div>
+          <h3 class="mt">${ic('message-circle')}Сообщения для WhatsApp</h3>
+          <div class="log">${o.notified.length ? o.notified.map((n, i) => `<div><time>${hm(n.ts)}</time><p>${esc(n.text).replace(/\n/g, '<br>')}</p><small>${n.sentAt ? 'Отправка отмечена мастером в ' + hm(n.sentAt) : n.openedAt ? 'WhatsApp открыт · отправка не подтверждена' : 'Черновик · не отправлено'}</small><button class="btn ghost" data-msg-open="${i}">Открыть WhatsApp</button>${n.openedAt && !n.sentAt ? `<button class="btn primary" data-msg-confirm="${i}">Я отправил сообщение</button>` : ''}</div>`).join('') : '<p class="muted">Сообщений ещё не было</p>'}</div>
         </div>
       </div>
       <div class="om-f">
@@ -170,23 +170,37 @@ function orderModal(o) {
       </div>
     </div>`, { wide: true });
   m.el.addEventListener('click', e => {
+    const open = e.target.closest('[data-msg-open]'), confirm = e.target.closest('[data-msg-confirm]');
+    if (open || confirm) {
+      const n = o.notified[+(open ? open.dataset.msgOpen : confirm.dataset.msgConfirm)];
+      if (open) { n.openedAt = Date.now(); window.open(whatsappUrl(o.client.phone, n.text), '_blank', 'noopener,noreferrer'); }
+      else if (n.openedAt) n.sentAt = Date.now();
+      store.save(); m.close(); orderModal(o); return;
+    }
     const b = e.target.closest('[data-next]'); if (!b) return;
     if (b.dataset.next === 'waiting') o.parts.forEach(p => { if (p.status === 'arrived') p.status = 'need'; });
     setStatus(o, b.dataset.next);
-    toast({ ready: 'Клиенту отправлено: «Заказ готов»', issued: 'Заказ выдан. Гарантия отправлена клиенту', work: 'Клиент уведомлён: мастер приступил', waiting: 'Клиент уведомлён: ждём деталь' }[b.dataset.next], 'send');
+    toast('Статус обновлён. Текст для WhatsApp подготовлен', 'send');
     m.close(); draw(); orderModal(o);
   });
 }
 
 function receiptModal(o) {
-  modal(`<div class="rc-done">
+  const m = modal(`<div class="rc-done">
     <div class="ok-ic">${ic('check')}</div>
     <h2>Заказ №${o.no} оформлен</h2>
-    <p class="muted">Квитанция отправлена клиенту в WhatsApp на ${esc(o.client.phone)}. По ссылке он видит статус ремонта и гарантию.</p>
+    <p class="muted">Квитанция готова. Откройте WhatsApp для ${esc(o.client.phone)} и отправьте сообщение вручную. В демо ссылка содержит снимок заказа; на другом устройстве статус не обновляется.</p>
     <div class="rc-qr">${qrSvg(receiptUrl(o), 190)}<div><b>Или покажите QR</b><small>Клиент откроет квитанцию камерой телефона</small></div></div>
     <div class="msg-preview"><small>${ic('message-circle')}WhatsApp · ${hm(Date.now())}</small><p>${esc(o.notified[0]?.text || '').replace(/\n/g, '<br>')}</p></div>
-    <div class="row"><a class="btn primary" href="#/r/${o.no}" data-close>${ic('eye')}Открыть глазами клиента</a><button class="btn ghost" data-close>Готово</button></div>
+    <div class="row"><button class="btn primary" data-receipt-send>Открыть WhatsApp</button><a class="btn ghost" href="#/r/${o.no}" data-close>${ic('eye')}Открыть глазами клиента</a><button class="btn ghost" data-close>Готово</button></div>
   </div>`);
+  m.el.addEventListener('click', e => {
+    if (!e.target.closest('[data-receipt-send]')) return;
+    const n = o.notified.find(n => n.kind === 'receipt');
+    if (n) { n.openedAt = Date.now(); store.save(); }
+    window.open(whatsappUrl(o.client.phone, n?.text || receiptUrl(o)), '_blank', 'noopener,noreferrer');
+    m.close(); orderModal(o);
+  });
 }
 
 // ---------- draw ----------
@@ -215,7 +229,7 @@ function readForm() {
 
 export function mount(el, params) {
   root = el;
-  if (!bId) { const c = store.s.chat; const l = c?.leadId && store.s.leads.find(x => x.id === c.leadId); bId = l?.booking?.branch || l?.branch || 'nektar'; }
+  if (!bId) { const l = store.s.leads.find(x => x.id === store.s.lastFormLead); bId = l?.booking?.branch || l?.branch || 'nektar'; }
   draw();
 
   el.addEventListener('click', e => {
@@ -230,7 +244,7 @@ export function mount(el, params) {
     if ((t = T('[data-part]'))) {
       const [oid, i, st] = t.dataset.part.split(':'); const o = store.s.orders.find(x => x.id === oid);
       o.parts[+i].status = st;
-      if (st === 'arrived') { notify(o, 'part'); if (o.status === 'waiting') setStatus(o, 'work'); toast('Клиент уведомлён: деталь пришла', 'send'); } else toast('Отмечено: заказано у поставщика');
+      if (st === 'arrived') { notify(o, 'part'); if (o.status === 'waiting') setStatus(o, 'work'); toast('Подготовлен текст: деталь пришла', 'send'); } else toast('Отмечено: заказано у поставщика');
       store.save(); return draw();
     }
     if (tab !== 'intake' || !form) return;

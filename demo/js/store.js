@@ -1,6 +1,6 @@
 import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js';
 
-const KEY = 'sheber-demo-v1';
+const KEY = 'sheber-demo-v2';
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 
 let state;
@@ -22,7 +22,7 @@ export function load() {
 
 // ---------- helpers ----------
 export const staff = id => STAFF.find(s => s.id === id);
-export const branch = id => BRANCHES.find(b => b.id === id);
+export const branch = id => BRANCHES.find(b => b.id === id) || { short: 'Помочь выбрать', name: 'Филиал уточняется', addr: '' };
 export function dutyToday(d = new Date()) { const [a, b] = DUTY[d.getDay()]; return { main: staff(a), backup: staff(b) }; }
 export function isOpen(d = new Date()) { if (state?.alwaysOpen) return true; const h = d.getHours(); return h >= 10 && h < 19; }
 // С какого момента считаем время ответа: заявки вне графика ждут открытия в 10:00
@@ -174,31 +174,35 @@ function seed() {
 // ---------- actions ----------
 export const now = () => Date.now();
 
-export function newLeadFromChat(c) {
+export function newLead(c) {
   const s = state;
   const lead = {
     id: 'L' + (++s.seq.lead), no: s.seq.lead, createdAt: now(), source: c.channel, lang: c.lang,
     client: { name: c.name, phone: c.phone }, device: c.model, problem: c.problem, branch: c.branch,
-    photo: c.photo || null, when: c.when, firstResponseAt: null, status: 'new', messages: [], fromDemoChat: true,
+    photo: c.photo || null, when: c.when, firstResponseAt: null, status: 'new', messages: [], entry: c.entry || 'form', takenAt: null, whatsappOpenedAt: null,
   };
   s.leads.push(lead); store.save(); return lead;
 }
 
-export function replyLead(lead, text, extra = {}) {
-  if (!lead.firstResponseAt) { lead.firstResponseAt = now(); lead.answeredBy = dutyToday().main.id; }
-  lead.status = lead.status === 'new' ? 'answered' : lead.status;
-  lead.messages.push({ from: 'master', text, ts: now(), ...extra });
-  if (lead.fromDemoChat && state.chat && state.chat.leadId === lead.id) {
-    state.chat.msgs.push({ from: 'master', text, ts: now(), ...extra });
-    if (extra.slots) state.chat.step = 'slots';
-  }
+export function takeLead(lead) {
+  if (!lead.takenAt) { lead.takenAt = now(); lead.takenBy = dutyToday().main.id; }
+  store.save();
+}
+export const whatsappUrl = (phone, text) => `https://wa.me/${phone.replace(/\D/g, '').replace(/^8(?=\d{10}$)/, '7')}?text=${encodeURIComponent(text)}`;
+export function openLeadWhatsApp(lead, text, price) {
+  lead.quote = price; lead.draft = text; lead.whatsappOpenedAt = now(); store.save();
+  window.open(whatsappUrl(lead.client.phone, text), '_blank', 'noopener,noreferrer');
+}
+export function confirmReply(lead) {
+  if (!lead.whatsappOpenedAt || lead.firstResponseAt) return;
+  lead.firstResponseAt = now(); lead.answeredBy = lead.takenBy || dutyToday().main.id;
+  lead.status = 'answered'; lead.messages.push({ from: 'master', text: lead.draft, ts: now(), selfReported: true });
   store.save();
 }
 
 export function bookLead(lead, ts, branchId) {
   lead.booking = { ts, branch: branchId || lead.branch };
   lead.status = 'booked';
-  if (!lead.firstResponseAt) { lead.firstResponseAt = now(); lead.answeredBy = dutyToday().main.id; }
   store.save();
 }
 
@@ -236,20 +240,18 @@ export function unpackOrder(str) {
 export const receiptUrl = (o, full = true) => `${location.origin}${location.pathname}#/r/${o.no}${full ? '/' + packOrder(o) : ''}`;
 
 export function notify(order, kind) {
-  const url = `${location.origin}${location.pathname}#/r/${order.no}`;
+  const url = receiptUrl(order);
   const b = branch(order.branch);
   const texts = {
     receipt: `Квитанция №${order.no} · ${order.device}\n${order.works.map(w => w.name).join(', ')}\nПредоплата: ${order.prepaid.toLocaleString('ru-RU')} ₸\nСтатус и гарантия: ${url}`,
     waiting: `Заказ №${order.no}: ждём деталь. Сообщим, как только придёт.`,
     work: `Заказ №${order.no}: мастер приступил к ремонту.`,
-    ready: `Заказ №${order.no} готов ✅ Заберите в ${b.name}, ${b.addr}. Работаем до 19:00.`,
+    ready: `Заказ №${order.no} готов ✅ Заберите в ${b.name}, ${b.addr}. Работаем до 19:00. Квитанция: ${url}`,
     issued: `Спасибо! Гарантия на ремонт №${order.no} — ${order.warranty} мес. Квитанция: ${url}`,
     part: `Заказ №${order.no}: деталь пришла, приступаем к ремонту.`,
   };
-  const msg = { kind, text: texts[kind], ts: now(), via: 'WhatsApp' };
+  const msg = { kind, text: texts[kind], ts: now(), via: 'WhatsApp', sentAt: null };
   order.notified.push(msg);
-  const c = state.chat;
-  if (c && c.phone && c.phone === order.client.phone) c.msgs.push({ from: 'system', text: msg.text, ts: now(), link: kind === 'receipt' || kind === 'issued' ? `#/r/${order.no}` : null });
 }
 
 // ---------- analytics ----------

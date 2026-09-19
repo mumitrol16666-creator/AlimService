@@ -1,17 +1,17 @@
 // Карточка заявки: используется и у дежурного, и рядом с клиентским чатом
 import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js';
-import { store, branch, replyLead, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js';
+import { store, branch, takeLead, openLeadWhatsApp, confirmReply, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js';
 import { esc, ic, hm, elapsed, dayLabel, toast, icons } from '../ui.js';
 
 export function slaOf(lead) {
-  if (lead.firstResponseAt) return { cls: 'ok', label: 'Отвечено за ' + Math.round(respMin(lead)) + ' мин' };
+  if (lead.firstResponseAt) return { cls: 'ok', label: 'Мастер подтвердил ответ за ' + Math.round(respMin(lead)) + ' мин' };
   const start = slaStart(lead);
   if (Date.now() < start) return { cls: 'ok', label: 'Пришла вне графика. Отсчёт 15 минут начнётся в 10:00', off: true };
   const m = (Date.now() - start) / MIN;
   const d = dutyToday();
-  if (m < 15) return { cls: 'ok', label: 'Норма: 15 минут', live: true };
-  if (m < 30) return { cls: 'warn', label: `Передано запасному: ${d.backup.name}`, live: true };
-  return { cls: 'bad', label: 'Передано владельцу', live: true };
+  if (m < 15) return { cls: 'ok', label: lead.takenAt ? 'Взята · ждём подтверждения ответа' : 'Не взята · норма 15 минут', live: true };
+  if (m < 30) return { cls: 'warn', label: `Демо · уведомление запасному: ${d.backup.name}`, live: true };
+  return { cls: 'bad', label: 'Демо · уведомление владельцу', live: true };
 }
 
 export function slots(lead) {
@@ -45,7 +45,7 @@ export function leadCard(lead, { compact = false } = {}) {
       </div>
       <div class="sla ${sla.cls}">
         ${sla.live ? `<b data-timer="${slaStart(lead)}">${elapsed(slaStart(lead))}</b>` : ic(sla.off ? 'moon' : 'check')}
-        <span>${esc(sla.label)}</span>
+        <span data-sla-id="${lead.id}">${esc(sla.label)}</span>
       </div>
     </div>
 
@@ -61,11 +61,13 @@ export function leadCard(lead, { compact = false } = {}) {
       <dl>
         <dt>Клиент</dt><dd>${esc(lead.client.name)} · <a href="tel:${esc(lead.client.phone)}">${esc(lead.client.phone)}</a></dd>
         <dt>Пришла</dt><dd>${hm(lead.createdAt)}, ${dayLabel(lead.createdAt)}</dd>
-        <dt>Собрал бот</dt><dd>модель, поломка, филиал${lead.photo ? ', фото' : ''} — переспрашивать не нужно</dd>
+        <dt>Заявка</dt><dd>${lead.entry === 'manual' ? 'Внесена мастером' : 'С формы сайта'}: модель, поломка, филиал${lead.photo ? ', фото' : ''}</dd>
       </dl>
     </div>
 
-    ${canQuote ? `
+    <div class="note">${lead.takenAt ? 'Взята в ' + hm(lead.takenAt) : 'Ещё не взята'}${lead.whatsappOpenedAt ? ' · WhatsApp открыт в ' + hm(lead.whatsappOpenedAt) : ''}${lead.firstResponseAt ? ' · отправка подтверждена мастером в ' + hm(lead.firstResponseAt) : ''}</div>
+    ${canQuote && !lead.takenAt ? '<button class="btn primary block" data-act="take">Взять заявку</button>' : ''}
+    ${canQuote && lead.takenAt ? `
     <div class="quote">
       <div class="quote-h">${ic('tag')}Цена из прайса <small>демо-данные</small></div>
       <div class="quote-opts">
@@ -73,11 +75,13 @@ export function leadCard(lead, { compact = false } = {}) {
         <label class="qopt custom"><input type="radio" name="q-${lead.id}" value="custom"><span><em>Своя цена</em><input type="number" inputmode="numeric" placeholder="₸" data-custom></span></label>
       </div>
       <div class="quote-f">${ic('timer')}${esc(p.time)} · гарантия ${p.warranty} мес${p.diag ? ' · диагностика бесплатно' : ''}</div>
-      <button class="btn primary block" data-act="quote">${ic('send')}Отправить цену и время записи</button>
+      <button class="btn primary block" data-act="quote">${ic('send')}Открыть WhatsApp с ценой</button>
+      ${lead.whatsappOpenedAt ? '<button class="btn primary block" data-act="confirm">Я отправил сообщение</button><p class="muted">Отметка мастера. Доставка не подтверждается.</p>' : ''}
       ${compact ? '' : `<button class="btn ghost block" data-act="call">${ic('phone')}Позвонить клиенту</button>`}
     </div>` : ''}
 
-    ${lead.status === 'answered' && !booked ? `<div class="note">${ic('hourglass')}Цена ${fmt(lead.quote || 0)} отправлена в ${hm(lead.firstResponseAt)}. Ждём, когда клиент выберет время.</div>` : ''}
+    ${lead.status === 'answered' && !booked ? `<div class="note">${ic('hourglass')}Мастер отметил отправку цены ${fmt(lead.quote || 0)} в ${hm(lead.firstResponseAt)}. Согласуйте время в WhatsApp и внесите запись ниже.</div>` : ''}
+    ${lead.status === 'answered' && !booked ? `<div class="quote"><label class="fld"><span>Филиал записи</span><select data-book-branch>${BRANCHES.map(b => `<option value="${b.id}" ${b.id === lead.branch ? 'selected' : ''}>${esc(b.short)}</option>`).join('')}</select></label><label class="fld"><span>Согласованное время</span><input type="datetime-local" data-book-time required></label><button class="btn primary" data-act="book">Записать клиента</button></div>` : ''}
     ${booked ? `<div class="note ok">${ic('calendar-check')}Записан: ${esc(branch(booked.branch).short)}, ${dayLabel(booked.ts)} в ${hm(booked.ts)}. Заявка уже у мастера точки.</div>` : ''}
     ${lead.status === 'converted' ? `<div class="note ok">${ic('check-circle-2')}Стала заказом</div>` : ''}
     ${lead.status === 'lost' ? `<div class="note bad">${ic('user-x')}Потеряна: клиент не дождался ответа</div>` : ''}
@@ -102,22 +106,30 @@ export function bindLeadCard(root, rerender) {
     if (!card) return;
     const lead = store.s.leads.find(l => l.id === card.dataset.lead);
     if (!lead) return;
+    if (btn.dataset.act === 'take') { takeLead(lead); rerender(); }
+    if (btn.dataset.act === 'confirm') { confirmReply(lead); toast('Ответ отмечен мастером'); rerender(); }
+    if (btn.dataset.act === 'book') {
+      const ts = new Date(card.querySelector('[data-book-time]').value).getTime();
+      if (!Number.isFinite(ts) || ts < Date.now()) return toast('Выберите будущее время', 'alert-circle');
+      lead.branch = card.querySelector('[data-book-branch]').value;
+      bookLead(lead, ts, lead.branch); toast('Клиент записан'); rerender();
+    }
     if (btn.dataset.act === 'quote') {
       const r = card.querySelector(`input[name="q-${lead.id}"]:checked`);
       let price = +r?.dataset.price, label = r?.dataset.label || 'Стоимость';
       if (r?.value === 'custom') { price = +card.querySelector('[data-custom]').value; label = 'Стоимость'; }
-      if (!price) { toast('Укажите цену', 'alert-circle'); return; }
-      lead.quote = price;
-      replyLead(lead, quoteText(lead, label, price), { slots: slots(lead) });
-      toast(`Цена отправлена клиенту · ответ за ${Math.round(respMin(lead))} мин`);
+      if (!Number.isFinite(price) || price <= 0) { toast('Укажите цену', 'alert-circle'); return; }
+      openLeadWhatsApp(lead, quoteText(lead, label, price), price);
+      toast('Нажмите «Отправить» в WhatsApp, затем подтвердите здесь');
       rerender();
     }
-    if (btn.dataset.act === 'call') toast('Звонок: ' + lead.client.phone, 'phone');
+    if (btn.dataset.act === 'call') window.location.href = 'tel:' + lead.client.phone;
   });
   root.addEventListener('focusin', e => { if (e.target.matches('[data-custom]')) e.target.closest('label').querySelector('input[type=radio]').checked = true; });
 }
 
 export function tickTimers(root) {
+  root.querySelectorAll('[data-sla-id]').forEach(el => { const lead = store.s.leads.find(l => l.id === el.dataset.slaId); if (lead) { const sla = slaOf(lead); el.textContent = sla.label; if (el.parentElement.classList.contains('sla')) el.parentElement.className = 'sla ' + sla.cls; } });
   root.querySelectorAll('[data-timer]').forEach(el => { el.textContent = elapsed(+el.dataset.timer); });
 }
 

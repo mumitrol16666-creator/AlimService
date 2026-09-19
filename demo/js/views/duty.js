@@ -1,3 +1,5 @@
+import { formMarkup, bindRequestForm } from './client.js';
+import { modal } from '../ui.js';
 import { PROBLEMS, SOURCES } from '../data.js';
 import { store, branch, dutyToday, stats, slaStart, MIN } from '../store.js';
 import { $, esc, ic, icons, hm, elapsed, dayLabel } from '../ui.js';
@@ -33,15 +35,17 @@ function draw() {
   const answeredToday = st.leads.filter(l => l.firstResponseAt);
   root.innerHTML = `
   <header class="vh">
-    <div><h1>Заявки</h1><p class="muted">Все каналы в одном месте: WhatsApp, Instagram, сайт. Переписка остаётся у компании, а не в личном телефоне.</p></div>
+    <div><h1>Заявки</h1><p class="muted">Заявки с формы сайта и внесённые вручную. Переписка ведётся в обычном WhatsApp.</p></div>
     <div class="duty-badge">${ic('user-check')}<div><small>Дежурный сегодня</small><b>${esc(d.main.name)}</b></div><div><small>Запасной</small><b>${esc(d.backup.name)}</b></div></div>
   </header>
   <div class="kpis small">
     <div class="kpi"><small>Ждут ответа</small><b class="${ls.new.length ? 'warn' : ''}">${ls.new.length}</b></div>
     <div class="kpi"><small>Заявок сегодня</small><b>${st.leads.length}</b></div>
-    <div class="kpi"><small>Средний ответ сегодня</small><b>${answeredToday.length ? Math.round(st.avgResp) + ' мин' : '—'}</b></div>
+    <div class="kpi"><small>Ответ по отметке мастера</small><b>${answeredToday.length ? Math.round(st.avgResp) + ' мин' : '—'}</b></div>
     <div class="kpi"><small>Правило</small><b class="rule">15 мин → запасной · 30 мин → владелец</b></div>
   </div>
+  <button class="btn ghost" data-manual>Создать заявку вручную</button>
+  <section class="telegram-preview"><div class="panel-h">${ic('send')}Telegram · пример уведомлений</div><p class="muted">Имитация. Бот не подключён; реальных отправок нет. Телефон и фото доступны в карточке заявки.</p>${ls.new.slice(-4).map(l => `<button class="tg-message" data-sel="${l.id}"><b>№${l.no} · ${esc(l.device)}</b><span>${esc(PROBLEMS[l.problem].ru)} · ${esc(branch(l.branch).short)}</span><small data-sla-id="${l.id}">${esc(slaOf(l).label)}</small><span>Открыть заявку →</span></button>`).join('')}</section>
   <div class="split">
     <div class="list">
       <div class="tabs">${[['new', 'Новые'], ['answered', 'Ждём клиента'], ['booked', 'Записаны'], ['lost', 'Потеряны']].map(([k, n]) => `<button class="${tab === k ? 'on' : ''}" data-tab="${k}">${n}<i>${ls[k].length}</i></button>`).join('')}</div>
@@ -52,11 +56,16 @@ function draw() {
   icons();
 }
 
-export function mount(el) {
+export function mount(el, params = {}) {
+  if (params.no) { sel = params.no; tab = store.s.leads.find(l => l.id === sel)?.status || 'new'; if (!['new', 'answered', 'booked', 'lost'].includes(tab)) tab = 'new'; }
   root = el; draw();
   bindLeadCard(el, draw);
   el.addEventListener('click', e => {
-    const r = e.target.closest('[data-sel]'); if (r) { sel = r.dataset.sel; draw(); return; }
+    if (e.target.closest('[data-manual]')) {
+      const m = modal('<h2>Заявка из переписки или звонка</h2>' + formMarkup(true));
+      bindRequestForm(m.el, lead => { m.close(); sel = lead.id; tab = 'new'; draw(); }, true); return;
+    }
+    const r = e.target.closest('[data-sel]'); if (r) { sel = r.dataset.sel; tab = store.s.leads.find(l => l.id === sel)?.status || 'new'; draw(); return; }
     const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; sel = null; draw(); }
   });
   timer = setInterval(() => tickTimers(el), 1000);

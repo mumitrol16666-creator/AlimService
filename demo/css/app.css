@@ -393,3 +393,10 @@ body.public .rail{display:none}
 @media print{
   body{background:#fff}.rc-bar,.rc-where .row,#toast{display:none!important}.rc-page{background:#fff;padding:0}.rc{box-shadow:none;max-width:none}
 }
+
+/* Заявка без API */
+.request-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(260px,1fr);gap:24px;align-items:start}
+.request-form{display:grid;gap:20px}.request-form .cols2{gap:20px}.request-form select,.request-form input{width:100%;min-width:0}.request-steps{padding-left:24px;line-height:1.7}.request-steps li{margin-bottom:18px}
+.telegram-preview{margin:24px 0;padding:22px;background:#e7f2f8;border:1px solid #c7dce8;border-radius:20px;display:flex;gap:12px;flex-wrap:wrap}.telegram-preview>.panel-h,.telegram-preview>p{width:100%}.tg-message{display:grid;gap:8px;text-align:left;background:white;padding:16px;border:1px solid #d3e4ee;border-radius:14px;flex:1;min-width:190px;color:#182a36;font:inherit;cursor:pointer}.tg-message small{color:#536b79}.quote>.fld{margin-bottom:14px}.log .btn{margin:8px 4px 8px 0}
+@media(max-width:760px){.request-layout{grid-template-columns:1fr}.request-form .cols2{grid-template-columns:1fr}.tg-message{min-width:100%}}
+.request-form select,.quote select,.quote input[type=datetime-local]{padding:14px 16px;border:1px solid #e2e2df;border-radius:12px;background:#fff;color:#161616;font:inherit;min-height:48px;width:100%}.request-form select:focus,.quote select:focus{outline:2px solid #ffc61a;outline-offset:2px}

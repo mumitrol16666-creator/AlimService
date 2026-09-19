@@ -1,5 +1,5 @@
 // Копия для показа: сначала сеть, при её отсутствии — сохранённое на устройстве.
-const C = 'alim-show-v1';
+const C = 'alim-show-v2';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(clients.claim()));
 self.addEventListener('fetch', e => {
