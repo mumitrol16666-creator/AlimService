@@ -1,7 +1,7 @@
-import { requestLang, saveRequestLang } from '../request-copy.js?v=202609201834';
-import { STATUSES } from '../data.js?v=202609201834';
-import { store, branch, staff, unpackOrder, receiptUrl, DAY } from '../store.js?v=202609201834';
-import { esc, ic, icons, money, hm, dm, dmy, qrSvg } from '../ui.js?v=202609201834';
+import { requestLang, saveRequestLang } from '../request-copy.js?v=202609201835';
+import { STATUSES } from '../data.js?v=202609201835';
+import { store, branch, staff, unpackOrder, receiptUrl, DAY } from '../store.js?v=202609201835';
+import { esc, ic, icons, money, hm, dm, dmy, qrSvg } from '../ui.js?v=202609201835';
 
 let lang = requestLang();
 const L = {

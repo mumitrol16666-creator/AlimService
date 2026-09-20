@@ -3,7 +3,7 @@
 Запуск:  python3 build/build_site.py
 Тексты и данные — в build/content.py. Стили — site/styles.css. Скрипты — site/main.js и site/analytics.js."""
 import html, json, os, re, struct, sys
-from datetime import date
+from datetime import date, datetime
 from urllib.parse import quote
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -12,7 +12,7 @@ from content import *  # noqa
 
 ROOT = os.path.join(os.path.dirname(HERE), "site")
 PREVIEW = os.environ.get("PREVIEW") == "1"   # копия для показа: закрыта от поисковиков
-VER = date.today().strftime("%Y%m%d") + "v4b"
+VER = os.environ.get("SITE_VER") or datetime.now().strftime("%Y%m%d%H%M")   # меняется при каждой сборке, иначе браузер держит старый CSS
 e = lambda s: html.escape(str(s), quote=True)
 # путь до формы заявки: абсолютный адрес берём как есть, относительный считаем от страницы
 def req_url(prefix, problem=None):
