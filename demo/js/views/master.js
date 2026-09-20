@@ -1,6 +1,6 @@
-import { BRANCHES, STAFF, PROBLEMS, STATUSES, SOURCES, CONDITIONS, DEVICES, priceFor } from '../data.js?v=202609201835';
-import { store, branch, staff, workFor, createOrder, setStatus, notify, receiptUrl, whatsappUrl, MIN, HOUR, DAY } from '../store.js?v=202609201835';
-import { $, $$, esc, ic, icons, hm, dm, dayLabel, ago, money, toast, modal, qrSvg, shrinkImage } from '../ui.js?v=202609201835';
+import { BRANCHES, STAFF, PROBLEMS, STATUSES, SOURCES, CONDITIONS, DEVICES, priceFor } from '../data.js?v=202609201842';
+import { store, branch, staff, workFor, createOrder, setStatus, notify, receiptUrl, whatsappUrl, MIN, HOUR, DAY } from '../store.js?v=202609201842';
+import { $, $$, esc, ic, icons, hm, dm, dayLabel, ago, money, toast, modal, qrSvg, shrinkImage } from '../ui.js?v=202609201842';
 
 let root, tab = 'today', bId = null, form = null, filter = 'active', q = '';
 

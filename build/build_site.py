@@ -262,7 +262,6 @@ def home():
         <a class="btn btn-primary" href="{req_url(prefix)}" data-goal="request_hero">{icon("clipboard-list")}Оставить заявку</a>
         <a class="btn btn-wa" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Написать в WhatsApp</a>
       </div>
-      <p class="cta-note">{icon("check")}<span>Заявка бесплатна и ни к чему не обязывает: мастер ответит с ценой, приезжать не обязательно.</span></p>
       <ul class="facts">
         <li><b>{RATING["value"]} ★</b><span>{RATING["count"]} оценок в 2ГИС</span></li>
         <li><b>4</b><span>филиала в Актобе</span></li>
@@ -331,7 +330,7 @@ def home():
 <section class="final">
   <div class="wrap final-inner">
     <h2 class="reveal">Сломался телефон?<br><span class="hl">Напишите — ответим с&nbsp;ценой</span></h2>
-    <div class="cta-row reveal"><a class="btn btn-primary btn-lg" href="{req_url(prefix)}" data-goal="request_final">{icon("clipboard-list")}Оставить заявку — это бесплатно</a><a class="btn btn-wa btn-lg" href="{wa}" target="_blank" rel="noopener" data-goal="wa_final">{icon("message-circle")}Написать в WhatsApp</a></div>
+    <div class="cta-row reveal"><a class="btn btn-primary btn-lg" href="{req_url(prefix)}" data-goal="request_final">{icon("clipboard-list")}Оставить заявку</a><a class="btn btn-wa btn-lg" href="{wa}" target="_blank" rel="noopener" data-goal="wa_final">{icon("message-circle")}Написать в WhatsApp</a></div>
   </div>
 </section>'''
     return layout(title="Ремонт iPhone и телефонов в Актобе — Alim Service", path="/", prefix="", body=body, wa=wa, lds=[business_ld()],
@@ -364,7 +363,6 @@ def service(p):
       <a class="btn btn-primary" href="{req_url(prefix, p.get("problem"))}" data-goal="request_hero">{icon("clipboard-list")}Оставить заявку</a>
       <a class="btn btn-wa" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Написать в WhatsApp</a>
     </div>
-    <p class="cta-note">{icon("check")}<span>Заявка бесплатна и ни к чему не обязывает: ответим с ценой.</span></p>
     <ul class="facts">
       <li><b>{RATING["value"]} ★</b><span>{RATING["count"]} оценок в 2ГИС</span></li>
       <li><b>4</b><span>филиала в Актобе</span></li>

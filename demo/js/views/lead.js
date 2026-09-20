@@ -1,8 +1,8 @@
-import { modelLabel, branchLabel, branchAddress } from '../request-copy.js?v=202609201835';
+import { modelLabel, branchLabel, branchAddress } from '../request-copy.js?v=202609201842';
 // Карточка заявки: используется и у дежурного, и рядом с клиентским чатом
-import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js?v=202609201835';
-import { store, branch, takeLead, openLeadWhatsApp, confirmReply, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js?v=202609201835';
-import { esc, ic, hm, elapsed, dayLabel, toast, icons } from '../ui.js?v=202609201835';
+import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js?v=202609201842';
+import { store, branch, takeLead, openLeadWhatsApp, confirmReply, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js?v=202609201842';
+import { esc, ic, hm, elapsed, dayLabel, toast, icons } from '../ui.js?v=202609201842';
 
 export function slaOf(lead) {
   if (lead.firstResponseAt) return { cls: 'ok', label: 'Мастер подтвердил ответ за ' + Math.round(respMin(lead)) + ' мин' };
