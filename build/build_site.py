@@ -14,6 +14,11 @@ ROOT = os.path.join(os.path.dirname(HERE), "site")
 PREVIEW = os.environ.get("PREVIEW") == "1"   # копия для показа: закрыта от поисковиков
 VER = date.today().strftime("%Y%m%d") + "v4b"
 e = lambda s: html.escape(str(s), quote=True)
+# путь до формы заявки: абсолютный адрес берём как есть, относительный считаем от страницы
+def req_url(prefix, problem=None):
+    """Ссылка на форму заявки. problem подставляется в форму, чтобы клиент не выбирал поломку заново."""
+    base = REQUEST_URL if REQUEST_URL.startswith("http") else prefix + REQUEST_URL
+    return base.replace("#", f"?p={problem}#") if problem else base
 plain = lambda s: s.replace("&nbsp;", " ")
 wa_url = lambda text: f"https://wa.me/{WA}?text={quote(text)}"
 WA_DEFAULT = "Здравствуйте! Нужен ремонт телефона. Модель и что случилось: "
@@ -239,11 +244,12 @@ def layout(*, title, desc, path, prefix, body, lds, wa, noindex=False, body_cls=
 
 # ---------- главная ----------
 def home():
+    prefix = ""
     wa = wa_url(WA_DEFAULT)
     cards = "".join(f'''
       <article class="card reveal">{icon(ic)}<h3>{e(t)}</h3><p>{e(d)}</p>
-        <div class="card-f"><a class="go" href="{wa_url(msg)}" target="_blank" rel="noopener" data-goal="wa_card">Узнать цену {icon("arrow-up-right")}</a>{f'<a class="more" href="{slug}/">Подробнее</a>' if slug else ""}</div>
-      </article>''' for ic, t, d, slug, msg in CARDS)
+        <div class="card-f"><a class="go" href="{req_url(prefix, problem)}" data-goal="request_card">Оставить заявку {icon("arrow-up-right")}</a><a class="more" href="{wa_url(msg)}" target="_blank" rel="noopener" data-goal="wa_card">WhatsApp</a>{f'<a class="more" href="{slug}/">Подробнее</a>' if slug else ""}</div>
+      </article>''' for ic, t, d, slug, msg, problem in CARDS)
     faq_ld = None
     body = f'''<section class="hero">
   <div class="hero-bg" aria-hidden="true"></div>
@@ -253,9 +259,10 @@ def home():
       <h1>Ремонт iPhone и&nbsp;телефонов <span class="hl">в&nbsp;Актобе</span></h1>
       <p class="lead">«Помогли за секунду», «сделал всё чётко за 5 минут», «цены приемлемые» — так о нас пишут клиенты в 2ГИС. Чиним iPhone, Android, iPad, MacBook, Apple Watch и AirPods.</p>
       <div class="cta-row">
-        <a class="btn btn-primary" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Узнать цену в WhatsApp</a>
-        <a class="btn btn-ghost" href="#branches">{icon("map-pin")}Ближайший филиал</a>
+        <a class="btn btn-primary" href="{req_url(prefix)}" data-goal="request_hero">{icon("clipboard-list")}Оставить заявку</a>
+        <a class="btn btn-wa" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Написать в WhatsApp</a>
       </div>
+      <p class="cta-note">{icon("check")}Заявка бесплатна и ни к чему не обязывает: мастер ответит с ценой, приезжать не обязательно.</p>
       <ul class="facts">
         <li><b>{RATING["value"]} ★</b><span>{RATING["count"]} оценок в 2ГИС</span></li>
         <li><b>4</b><span>филиала в Актобе</span></li>
@@ -324,7 +331,7 @@ def home():
 <section class="final">
   <div class="wrap final-inner">
     <h2 class="reveal">Сломался телефон?<br><span class="hl">Напишите — ответим с&nbsp;ценой</span></h2>
-    <div class="cta-row reveal"><a class="btn btn-primary btn-lg" href="{wa}" target="_blank" rel="noopener" data-goal="wa_final">{icon("message-circle")}Написать в WhatsApp</a></div>
+    <div class="cta-row reveal"><a class="btn btn-primary btn-lg" href="{req_url(prefix)}" data-goal="request_final">{icon("clipboard-list")}Оставить заявку — это бесплатно</a><a class="btn btn-wa btn-lg" href="{wa}" target="_blank" rel="noopener" data-goal="wa_final">{icon("message-circle")}Написать в WhatsApp</a></div>
   </div>
 </section>'''
     return layout(title="Ремонт iPhone и телефонов в Актобе — Alim Service", path="/", prefix="", body=body, wa=wa, lds=[business_ld()],
@@ -354,9 +361,10 @@ def service(p):
     <h1>{p["h1"]}</h1>
     <p class="lead">{e(p["lead"])}</p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Узнать цену в WhatsApp</a>
-      <a class="btn btn-ghost" href="#branches">{icon("map-pin")}Ближайший филиал</a>
+      <a class="btn btn-primary" href="{req_url(prefix, p.get("problem"))}" data-goal="request_hero">{icon("clipboard-list")}Оставить заявку</a>
+      <a class="btn btn-wa" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Написать в WhatsApp</a>
     </div>
+    <p class="cta-note">{icon("check")}Заявка бесплатна и ни к чему не обязывает: ответим с ценой.</p>
     <ul class="facts">
       <li><b>{RATING["value"]} ★</b><span>{RATING["count"]} оценок в 2ГИС</span></li>
       <li><b>4</b><span>филиала в Актобе</span></li>
@@ -378,7 +386,7 @@ def service(p):
       <p class="kicker">Стоимость</p><h2>От чего зависит цена</h2>
       <ul class="ticks">{li(p["price"])}</ul>
       <p class="sec-sub">Точную сумму называем до начала работ.</p>
-      <div class="cta-row"><a class="btn btn-primary" href="{wa}" target="_blank" rel="noopener" data-goal="wa_price">{icon("message-circle")}Спросить цену на мою модель</a></div>
+      <div class="cta-row"><a class="btn btn-primary" href="{req_url(prefix, p.get("problem"))}" data-goal="request_price">{icon("clipboard-list")}Оставить заявку</a><a class="btn btn-ghost" href="{wa}" target="_blank" rel="noopener" data-goal="wa_price">{icon("message-circle")}WhatsApp</a></div>
     </div>
     {media}
   </div>

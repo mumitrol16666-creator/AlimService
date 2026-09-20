@@ -281,3 +281,8 @@ h3 { font-family: var(--f-head); font-weight: 700; }
 .js .dev.in span { opacity: 1; }
 @media (max-width: 560px) { .devices ul { gap: 4px; } .dev { font-size: 10.5px; } .dev svg { width: 44px; height: 44px; } }
 @media (prefers-reduced-motion: reduce) { .crack, .shine { display: none !important; } }
+
+/* Заявка с сайта */
+.cta-note { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14.5px; color: #cfcfcf; }
+.cta-note .ic { width: 16px; height: 16px; color: #25d366; }
+.card-f .more { margin-left: auto; }

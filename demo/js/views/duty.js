@@ -1,9 +1,9 @@
-import { formMarkup, bindRequestForm } from './client.js?v=202609201725';
-import { modal } from '../ui.js?v=202609201725';
-import { PROBLEMS, SOURCES } from '../data.js?v=202609201725';
-import { store, branch, dutyToday, stats, slaStart, MIN } from '../store.js?v=202609201725';
-import { $, esc, ic, icons, hm, elapsed, dayLabel } from '../ui.js?v=202609201725';
-import { leadCard, bindLeadCard, tickTimers, slaOf } from './lead.js?v=202609201725';
+import { formMarkup, bindRequestForm } from './client.js?v=202609201828';
+import { modal } from '../ui.js?v=202609201828';
+import { PROBLEMS, SOURCES } from '../data.js?v=202609201828';
+import { store, branch, dutyToday, stats, slaStart, MIN } from '../store.js?v=202609201828';
+import { $, esc, ic, icons, hm, elapsed, dayLabel } from '../ui.js?v=202609201828';
+import { leadCard, bindLeadCard, tickTimers, slaOf } from './lead.js?v=202609201828';
 
 let root, sel = null, tab = 'new', timer;
 

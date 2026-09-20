@@ -1,7 +1,7 @@
-import { BRANCHES, DEVICES, PROBLEMS, SOURCES } from '../data.js?v=202609201725';
-import { store, newLead, isOpen, whatsappUrl, countWhatsAppSkip, BRANCH_WHATSAPP } from '../store.js?v=202609201725';
-import { esc, ic, icons, shrinkImage } from '../ui.js?v=202609201725';
-import { REQUEST_COPY, requestLang, saveRequestLang, modelLabel, modelValue, branchLabel, branchAddress } from '../request-copy.js?v=202609201725';
+import { BRANCHES, DEVICES, PROBLEMS, SOURCES } from '../data.js?v=202609201828';
+import { store, newLead, isOpen, whatsappUrl, countWhatsAppSkip, BRANCH_WHATSAPP } from '../store.js?v=202609201828';
+import { esc, ic, icons, shrinkImage } from '../ui.js?v=202609201828';
+import { REQUEST_COPY, requestLang, saveRequestLang, modelLabel, modelValue, branchLabel, branchAddress } from '../request-copy.js?v=202609201828';
 
 const languageSwitch = lang => `<div class="request-language" role="group" aria-label="${REQUEST_COPY[lang].language}"><button type="button" data-request-lang="ru" aria-pressed="${lang === 'ru'}" lang="ru">RU</button><button type="button" data-request-lang="kz" aria-pressed="${lang === 'kz'}" lang="kk">ҚАЗ</button></div>`;
 const sourceLabel = (key, lang) => key === 'walk' ? REQUEST_COPY[lang].walk : key === 'site' ? REQUEST_COPY[lang].site : SOURCES[key].label;
@@ -126,6 +126,9 @@ export function bindRequestForm(root, done, manual = false, onLanguage = () => {
   });
 }
 
+// поломка может прийти ссылкой с сайта: ../demo/?p=screen#/client
+const problemFromUrl = () => { const p=new URLSearchParams(location.search).get('p'); return p && PROBLEMS[p] ? p : ''; };
+
 export function mount(el) {
   let lang=requestLang();
   const lead = () => store.s.leads.find(l => l.id === store.s.lastFormLead);
@@ -138,7 +141,7 @@ export function mount(el) {
   };
   const draw = () => {
     const t=REQUEST_COPY[lang], l=lead();
-    el.innerHTML=`<header class="vh request-header"><div><h1 data-request-heading></h1><p class="muted" data-request-subtitle></p></div></header><div class="request-layout"><section class="request-card">${l ? `<div class="request-form-top"><span class="request-eyebrow">ALIM SERVICE</span>${languageSwitch(lang)}</div><div class="request-success"><div class="ok-ic">${ic('check')}</div><h2 tabindex="-1">${t.accepted(l.no)}</h2><p>${esc(modelLabel(l.device,lang))} · ${esc(PROBLEMS[l.problem][lang])}</p><p>${isOpen() ? t.reply : t.replyOff}</p><div class="request-success-actions"><a class="btn primary" href="#/duty/${l.id}">${t.seeDuty}</a><button class="btn ghost" data-new>${t.another}</button></div><p class="request-help">${t.saved}</p></div>` : formMarkup(false,lang)}</section><aside class="request-aside" data-request-aside></aside></div>`;
+    el.innerHTML=`<header class="vh request-header"><div><h1 data-request-heading></h1><p class="muted" data-request-subtitle></p></div></header><div class="request-layout"><section class="request-card">${l ? `<div class="request-form-top"><span class="request-eyebrow">ALIM SERVICE</span>${languageSwitch(lang)}</div><div class="request-success"><div class="ok-ic">${ic('check')}</div><h2 tabindex="-1">${t.accepted(l.no)}</h2><p>${esc(modelLabel(l.device,lang))} · ${esc(PROBLEMS[l.problem][lang])}</p><p>${isOpen() ? t.reply : t.replyOff}</p><div class="request-success-actions"><button class="btn wa" data-wa-lead="${l.id}">${ic('message-circle')}${t.waAfter}</button><a class="btn ghost" href="#/duty/${l.id}">${t.seeDuty}</a><button class="btn ghost" data-new>${t.another}</button></div><p class="request-help">${t.waAfterHint}</p><p class="request-help">${t.saved}</p></div>` : formMarkup(false,lang,{problem:problemFromUrl()})}</section><aside class="request-aside" data-request-aside></aside></div>`;
     surrounding();
   };
   draw();
@@ -147,5 +150,12 @@ export function mount(el) {
     const language=e.target.closest('[data-request-lang]');
     if (language && !e.target.closest('#request-form')) {lang=language.dataset.requestLang;saveRequestLang(lang);draw();}
     if (e.target.closest('[data-new]')) {store.s.lastFormLead=null;store.save();draw();}
+    const waBtn=e.target.closest('[data-wa-lead]');
+    if (waBtn) {     // после отправки заявки клиент может сразу написать сам
+      const l=store.s.leads.find(x=>x.id===waBtn.dataset.waLead); if (!l) return;
+      const t=REQUEST_COPY[lang];
+      const lines=[`${t.waRequest}${l.no}`, `${t.waDevice}: ${modelLabel(l.device,lang)}`, `${t.waProblem}: ${PROBLEMS[l.problem][lang]}`];
+      window.open(whatsappUrl(BRANCH_WHATSAPP[l.branch] || BRANCH_WHATSAPP.default, lines.join('\n')), '_blank', 'noopener,noreferrer');
+    }
   });
 }
