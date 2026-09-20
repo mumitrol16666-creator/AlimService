@@ -87,7 +87,7 @@ h3 { font-family: var(--f-head); font-weight: 700; }
 .hero-bg { position: absolute; inset: 0; background: radial-gradient(600px 400px at 85% 30%, rgba(255, 198, 26, .16), transparent 70%), radial-gradient(500px 380px at 10% 90%, rgba(242, 106, 27, .14), transparent 70%), url(assets/img/map-bg.webp); background-size: auto, auto, 900px; }
 .hero-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14, 14, 14, .55), rgba(14, 14, 14, .92)); }
 .hero-grid { position: relative; display: grid; grid-template-columns: 1.2fr .8fr; gap: 56px; align-items: center; }
-.eyebrow { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: #d4d4d4; padding: 8px 14px; border: 1px solid var(--line-d); border-radius: 99px; background: rgba(255, 255, 255, .04); }
+.eyebrow { display: inline-flex; align-items: center; gap: 4px 10px; flex-wrap: wrap; font-size: 14px; color: #d4d4d4; padding: 8px 14px; border: 1px solid var(--line-d); border-radius: 99px; background: rgba(255, 255, 255, .04); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: #25d366; }
 .lead { font-size: 19px; color: #d0d0d0; max-width: 600px; }
 .facts { list-style: none; display: flex; flex-wrap: wrap; gap: 18px 36px; margin-top: 40px; padding-top: 26px; border-top: 1px solid var(--line-d); }
@@ -283,6 +283,9 @@ h3 { font-family: var(--f-head); font-weight: 700; }
 @media (prefers-reduced-motion: reduce) { .crack, .shine { display: none !important; } }
 
 /* Заявка с сайта */
-.cta-note { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 14.5px; color: #cfcfcf; }
-.cta-note .ic { width: 16px; height: 16px; color: #25d366; }
+.cta-note { display: flex; align-items: flex-start; gap: 10px; margin-top: 20px; max-width: 560px; font-size: 14.5px; line-height: 1.5; color: #c4c4c4; }
+.cta-note .ic { width: 17px; height: 17px; margin-top: 2px; color: #25d366; }
 .card-f .more { margin-left: auto; }
+
+.eyebrow > .nw::before { content: "·"; margin-right: 8px; color: #8a8a8a; }
+@media (max-width: 560px) { .eyebrow > .nw::before { display: none; } .eyebrow { line-height: 1.35; } }

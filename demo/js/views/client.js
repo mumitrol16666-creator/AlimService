@@ -1,7 +1,7 @@
-import { BRANCHES, DEVICES, PROBLEMS, SOURCES } from '../data.js?v=202609201830';
-import { store, newLead, isOpen, whatsappUrl, countWhatsAppSkip, BRANCH_WHATSAPP } from '../store.js?v=202609201830';
-import { esc, ic, icons, shrinkImage } from '../ui.js?v=202609201830';
-import { REQUEST_COPY, requestLang, saveRequestLang, modelLabel, modelValue, branchLabel, branchAddress } from '../request-copy.js?v=202609201830';
+import { BRANCHES, DEVICES, PROBLEMS, SOURCES } from '../data.js?v=202609201834';
+import { store, newLead, isOpen, whatsappUrl, countWhatsAppSkip, BRANCH_WHATSAPP } from '../store.js?v=202609201834';
+import { esc, ic, icons, shrinkImage } from '../ui.js?v=202609201834';
+import { REQUEST_COPY, requestLang, saveRequestLang, modelLabel, modelValue, branchLabel, branchAddress } from '../request-copy.js?v=202609201834';
 
 const languageSwitch = lang => `<div class="request-language" role="group" aria-label="${REQUEST_COPY[lang].language}"><button type="button" data-request-lang="ru" aria-pressed="${lang === 'ru'}" lang="ru">RU</button><button type="button" data-request-lang="kz" aria-pressed="${lang === 'kz'}" lang="kk">ҚАЗ</button></div>`;
 const sourceLabel = (key, lang) => key === 'walk' ? REQUEST_COPY[lang].walk : key === 'site' ? REQUEST_COPY[lang].site : SOURCES[key].label;

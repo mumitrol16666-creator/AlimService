@@ -255,14 +255,14 @@ def home():
   <div class="hero-bg" aria-hidden="true"></div>
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <p class="eyebrow"><span class="dot"></span>Актобе · 4 филиала · <span class="nw">ежедневно 10:00–19:00</span></p>
+      <p class="eyebrow"><span class="dot"></span><span>Актобе · 4 филиала</span><span class="nw">ежедневно 10:00–19:00</span></p>
       <h1>Ремонт iPhone и&nbsp;телефонов <span class="hl">в&nbsp;Актобе</span></h1>
       <p class="lead">«Помогли за секунду», «сделал всё чётко за 5 минут», «цены приемлемые» — так о нас пишут клиенты в 2ГИС. Чиним iPhone, Android, iPad, MacBook, Apple Watch и AirPods.</p>
       <div class="cta-row">
         <a class="btn btn-primary" href="{req_url(prefix)}" data-goal="request_hero">{icon("clipboard-list")}Оставить заявку</a>
         <a class="btn btn-wa" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Написать в WhatsApp</a>
       </div>
-      <p class="cta-note">{icon("check")}Заявка бесплатна и ни к чему не обязывает: мастер ответит с ценой, приезжать не обязательно.</p>
+      <p class="cta-note">{icon("check")}<span>Заявка бесплатна и ни к чему не обязывает: мастер ответит с ценой, приезжать не обязательно.</span></p>
       <ul class="facts">
         <li><b>{RATING["value"]} ★</b><span>{RATING["count"]} оценок в 2ГИС</span></li>
         <li><b>4</b><span>филиала в Актобе</span></li>
@@ -364,7 +364,7 @@ def service(p):
       <a class="btn btn-primary" href="{req_url(prefix, p.get("problem"))}" data-goal="request_hero">{icon("clipboard-list")}Оставить заявку</a>
       <a class="btn btn-wa" href="{wa}" target="_blank" rel="noopener" data-goal="wa_hero">{icon("message-circle")}Написать в WhatsApp</a>
     </div>
-    <p class="cta-note">{icon("check")}Заявка бесплатна и ни к чему не обязывает: ответим с ценой.</p>
+    <p class="cta-note">{icon("check")}<span>Заявка бесплатна и ни к чему не обязывает: ответим с ценой.</span></p>
     <ul class="facts">
       <li><b>{RATING["value"]} ★</b><span>{RATING["count"]} оценок в 2ГИС</span></li>
       <li><b>4</b><span>филиала в Актобе</span></li>

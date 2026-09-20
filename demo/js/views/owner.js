@@ -1,6 +1,6 @@
-import { BRANCHES, SOURCES, STAFF, PROBLEMS } from '../data.js?v=202609201830';
-import { store, stats, branch, staff, periodStart, slaStart, respMin, MIN, DAY } from '../store.js?v=202609201830';
-import { $, esc, ic, icons, money, moneyShort, dm, ago } from '../ui.js?v=202609201830';
+import { BRANCHES, SOURCES, STAFF, PROBLEMS } from '../data.js?v=202609201834';
+import { store, stats, branch, staff, periodStart, slaStart, respMin, MIN, DAY } from '../store.js?v=202609201834';
+import { $, esc, ic, icons, money, moneyShort, dm, ago } from '../ui.js?v=202609201834';
 
 let root, period = 'month', bId = '', adSpend = 60000, charts = [];
 const PAL = ['#ffc61a', '#f26a1b', '#0e0e0e', '#9ca3af'];
