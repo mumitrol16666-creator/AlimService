@@ -1,5 +1,5 @@
 // Копия для показа: сначала сеть, при её отсутствии — сохранённое на устройстве.
-const C = 'alim-show-202609201534';
+const C = 'alim-show-202609201725';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k)))).then(() => clients.claim())));   // старые версии удаляются
 self.addEventListener('fetch', e => {

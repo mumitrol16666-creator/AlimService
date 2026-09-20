@@ -1,6 +1,6 @@
-import { BRANCHES, SOURCES, STAFF, PROBLEMS } from '../data.js?v=202609201534';
-import { store, stats, branch, staff, periodStart, slaStart, respMin, MIN, DAY } from '../store.js?v=202609201534';
-import { $, esc, ic, icons, money, moneyShort, dm, ago } from '../ui.js?v=202609201534';
+import { BRANCHES, SOURCES, STAFF, PROBLEMS } from '../data.js?v=202609201725';
+import { store, stats, branch, staff, periodStart, slaStart, respMin, MIN, DAY } from '../store.js?v=202609201725';
+import { $, esc, ic, icons, money, moneyShort, dm, ago } from '../ui.js?v=202609201725';
 
 let root, period = 'month', bId = '', adSpend = 60000, charts = [];
 const PAL = ['#ffc61a', '#f26a1b', '#0e0e0e', '#9ca3af'];
@@ -47,6 +47,7 @@ function draw() {
     <div class="kpi"><small>Заявок из каналов</small><b>${st.leads.length}</b><span>${Math.round(convRate * 100)}% стали заказами</span></div>
     <div class="kpi"><small>Ответ по отметке мастера</small><b class="${st.avgResp > 15 ? 'warn' : 'good'}">${Math.round(st.avgResp)} мин</b><span>доставка не подтверждается</span></div>
     <div class="kpi"><small>Готовы, ждут клиента</small><b>${st.open.filter(o => o.status === 'ready').length}</b><span>к получению ${money(st.open.filter(o => o.status === 'ready').reduce((a, o) => a + o.total - o.prepaid, 0))}</span></div>
+    <div class="kpi"><small>Ушли сразу в WhatsApp</small><b>${store.s.waSkips || 0}</b><span>нажали «Сразу в WhatsApp» вместо формы</span></div>
     <div class="kpi bad"><small>Потеряно заявок</small><b>${st.lost.length}</b><span>≈ ${moneyShort(lostMoney)} недополучено</span></div>
   </div>
 

@@ -1,6 +1,6 @@
-import { BRANCHES, STAFF, PROBLEMS, STATUSES, SOURCES, CONDITIONS, DEVICES, priceFor } from '../data.js?v=202609201534';
-import { store, branch, staff, workFor, createOrder, setStatus, notify, receiptUrl, whatsappUrl, MIN, HOUR, DAY } from '../store.js?v=202609201534';
-import { $, $$, esc, ic, icons, hm, dm, dayLabel, ago, money, toast, modal, qrSvg, shrinkImage } from '../ui.js?v=202609201534';
+import { BRANCHES, STAFF, PROBLEMS, STATUSES, SOURCES, CONDITIONS, DEVICES, priceFor } from '../data.js?v=202609201725';
+import { store, branch, staff, workFor, createOrder, setStatus, notify, receiptUrl, whatsappUrl, MIN, HOUR, DAY } from '../store.js?v=202609201725';
+import { $, $$, esc, ic, icons, hm, dm, dayLabel, ago, money, toast, modal, qrSvg, shrinkImage } from '../ui.js?v=202609201725';
 
 let root, tab = 'today', bId = null, form = null, filter = 'active', q = '';
 
@@ -116,13 +116,13 @@ function intake() {
         <label class="fld"><span>Модель</span><input name="device" placeholder="Например: iPhone 13 Pro" value="${esc(f.device)}"></label>
         <label class="fld"><span>IMEI / серийный номер</span><input name="imei" inputmode="numeric" placeholder="необязательно" value="${esc(f.imei)}"></label>
         <h2 class="mt">${ic('scan-eye')}Состояние при приёме</h2>
-        <div class="pick multi">${CONDITIONS.map(c => `<button type="button" class="${f.condition.includes(c) ? 'on' : ''}" data-cond="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+        <div class="pick multi"><button type="button" class="${f.noIssues ? 'on' : ''}" data-cond-none>Без замечаний</button>${CONDITIONS.map(c => `<button type="button" class="${f.condition.includes(c) ? 'on' : ''}" data-cond="${esc(c)}">${esc(c)}</button>`).join('')}</div>
         <div class="photos">${f.photos.map((p, i) => `<figure><img src="${esc(p)}" alt=""><button type="button" data-delphoto="${i}">${ic('x')}</button></figure>`).join('')}<label class="addphoto">${ic('camera')}<span>Фото</span><input type="file" accept="image/*" capture="environment" hidden id="ph"></label></div>
       </section>
       <section class="card">
         <h2>${ic('stethoscope')}Поломка и работы</h2>
         <div class="pick">${Object.entries(PROBLEMS).map(([k, v]) => `<button type="button" class="${f.problem === k ? 'on' : ''}" data-problem="${k}">${ic(v.icon)}${v.ru}</button>`).join('')}</div>
-        <label class="fld"><span>Со слов клиента</span><input name="defect" value="${esc(f.defect)}" placeholder="Что случилось"></label>
+        ${f.problem && f.problem !== 'other' ? `<input type="hidden" name="defect" value="${esc(f.defect)}">` : `<label class="fld"><span>Со слов клиента</span><input name="defect" value="${esc(f.defect)}" placeholder="Что случилось"></label>`}
         <div class="works">${f.works.map((w, i) => `<div class="work"><input data-wname="${i}" value="${esc(w.name)}" placeholder="Работа"><input data-wprice="${i}" inputmode="numeric" value="${esc(w.price)}" placeholder="₸"><button type="button" class="icon-btn" data-delwork="${i}">${ic('trash-2')}</button></div>`).join('')}
           <button type="button" class="btn ghost sm" data-addwork>${ic('plus')}Добавить работу</button></div>
         <label class="switch"><input type="checkbox" name="needPart" ${f.needPart ? 'checked' : ''}><i></i><span>Деталь нужно заказать</span></label>
@@ -131,7 +131,7 @@ function intake() {
         <div class="sumline"><span>Итого</span><b>${money(tot)}</b></div>
         <div class="pick">${[[0, 'Без предоплаты'], [5000, '5 000 ₸'], [Math.round(tot / 2 / 500) * 500, '50%'], [tot, 'Полностью']].map(([v, n]) => `<button type="button" class="${+f.prepaid === v ? 'on' : ''}" data-prepaid="${v}">${n}</button>`).join('')}</div>
         <div class="cols2 tight"><label class="fld"><span>Предоплата, ₸</span><input name="prepaid" inputmode="numeric" value="${esc(f.prepaid)}"></label>
-        <div class="fld"><span>Способ</span><div class="seg sm">${[['kaspi', 'Kaspi'], ['cash', 'Наличные'], ['card', 'Карта']].map(([k, n]) => `<button type="button" class="${f.payMethod === k ? 'on' : ''}" data-pay="${k}">${n}</button>`).join('')}</div></div></div>
+        ${+f.prepaid > 0 ? `<div class="fld"><span>Способ</span><div class="seg sm">${[['kaspi', 'Kaspi'], ['cash', 'Наличные'], ['card', 'Карта']].map(([k, n]) => `<button type="button" class="${f.payMethod === k ? 'on' : ''}" data-pay="${k}">${n}</button>`).join('')}</div></div>` : ''}</div>
         <div class="sumline"><span>Останется к оплате</span><b>${money(Math.max(0, tot - f.prepaid))}</b></div>
         <h2 class="mt">${ic('calendar')}Срок и мастер</h2>
         <div class="pick">${[['h3', 'Через 3 часа'], ['tomorrow', 'Завтра'], ['d3', '3 дня'], ['d7', 'Неделя']].map(([k, n]) => `<button type="button" class="${f.deadline === k ? 'on' : ''}" data-deadline="${k}">${n}</button>`).join('')}</div>
@@ -235,7 +235,12 @@ export function mount(el, params) {
   el.addEventListener('click', e => {
     const T = s => e.target.closest(s);
     let t;
-    if ((t = T('[data-branch]'))) { bId = t.dataset.branch; form = null; return draw(); }
+    if ((t = T('[data-branch]'))) {
+      if (tab === 'intake' && form) readForm();
+      bId = t.dataset.branch;
+      if (form && !STAFF.some(s => s.id === form.master && s.branch === bId)) form.master = STAFF.find(s => s.branch === bId)?.id;
+      return draw();
+    }
     if ((t = T('[data-tab]'))) { readForm(); tab = t.dataset.tab; return draw(); }
     if ((t = T('[data-accept]'))) { const l = store.s.leads.find(x => x.id === t.dataset.accept); form = blankForm(l); tab = 'intake'; draw(); return window.scrollTo(0, 0); }
     if (T('[data-newintake]')) { form = blankForm(); tab = 'intake'; return draw(); }
@@ -251,7 +256,8 @@ export function mount(el, params) {
     readForm();
     if ((t = T('[data-device]'))) { form.device = t.dataset.device; if (form.problem) applyProblem(form, form.problem); }
     else if ((t = T('[data-problem]'))) applyProblem(form, t.dataset.problem);
-    else if ((t = T('[data-cond]'))) { const c = t.dataset.cond; form.condition = form.condition.includes(c) ? form.condition.filter(x => x !== c) : [...form.condition, c]; }
+    else if (T('[data-cond-none]')) { form.noIssues = !form.noIssues; if (form.noIssues) form.condition = []; }
+    else if ((t = T('[data-cond]'))) { const c = t.dataset.cond; form.condition = form.condition.includes(c) ? form.condition.filter(x => x !== c) : [...form.condition, c]; form.noIssues = false; }
     else if ((t = T('[data-prepaid]'))) form.prepaid = +t.dataset.prepaid;
     else if ((t = T('[data-pay]'))) form.payMethod = t.dataset.pay;
     else if ((t = T('[data-deadline]'))) form.deadline = t.dataset.deadline;

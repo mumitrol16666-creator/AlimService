@@ -1,8 +1,8 @@
-import { modelLabel, branchLabel, branchAddress } from '../request-copy.js?v=202609201534';
+import { modelLabel, branchLabel, branchAddress } from '../request-copy.js?v=202609201725';
 // Карточка заявки: используется и у дежурного, и рядом с клиентским чатом
-import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js?v=202609201534';
-import { store, branch, takeLead, openLeadWhatsApp, confirmReply, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js?v=202609201534';
-import { esc, ic, hm, elapsed, dayLabel, toast, icons } from '../ui.js?v=202609201534';
+import { PROBLEMS, SOURCES, BRANCHES, priceFor, fmt } from '../data.js?v=202609201725';
+import { store, branch, takeLead, openLeadWhatsApp, confirmReply, bookLead, dutyToday, slaStart, respMin, MIN, HOUR } from '../store.js?v=202609201725';
+import { esc, ic, hm, elapsed, dayLabel, toast, icons } from '../ui.js?v=202609201725';
 
 export function slaOf(lead) {
   if (lead.firstResponseAt) return { cls: 'ok', label: 'Мастер подтвердил ответ за ' + Math.round(respMin(lead)) + ' мин' };
@@ -67,8 +67,8 @@ export function leadCard(lead, { compact = false } = {}) {
     </div>
 
     <div class="note">${lead.takenAt ? 'Взята в ' + hm(lead.takenAt) : 'Ещё не взята'}${lead.whatsappOpenedAt ? ' · WhatsApp открыт в ' + hm(lead.whatsappOpenedAt) : ''}${lead.firstResponseAt ? ' · отправка подтверждена мастером в ' + hm(lead.firstResponseAt) : ''}</div>
-    ${canQuote && !lead.takenAt ? '<button class="btn primary block" data-act="take">Взять заявку</button>' : ''}
-    ${canQuote && lead.takenAt ? `
+    ${canQuote && !lead.takenAt ? '<button class="btn ghost block" data-act="take">Взять заявку</button>' : ''}
+    ${canQuote ? `
     <div class="quote">
       <div class="quote-h">${ic('tag')}Цена из прайса <small>демо-данные</small></div>
       <div class="quote-opts">
@@ -82,7 +82,7 @@ export function leadCard(lead, { compact = false } = {}) {
     </div>` : ''}
 
     ${lead.status === 'answered' && !booked ? `<div class="note">${ic('hourglass')}Мастер отметил отправку цены ${fmt(lead.quote || 0)} в ${hm(lead.firstResponseAt)}. Согласуйте время в WhatsApp и внесите запись ниже.</div>` : ''}
-    ${lead.status === 'answered' && !booked ? `<div class="quote"><label class="fld"><span>Филиал записи</span><select data-book-branch>${BRANCHES.map(b => `<option value="${b.id}" ${b.id === lead.branch ? 'selected' : ''}>${esc(b.short)}</option>`).join('')}</select></label><label class="fld"><span>Согласованное время</span><input type="datetime-local" data-book-time required></label><button class="btn primary" data-act="book">Записать клиента</button></div>` : ''}
+    ${lead.status === 'answered' && !booked ? `<div class="quote"><label class="fld"><span>Филиал записи</span><select data-book-branch>${BRANCHES.map(b => `<option value="${b.id}" ${b.id === lead.branch ? 'selected' : ''}>${esc(b.short)}</option>`).join('')}</select></label><div class="quick-times">${slots(lead).map(ts => `<button type="button" class="btn ghost sm" data-quick="${ts}">${dayLabel(ts)} ${hm(ts)}</button>`).join('')}</div><label class="fld"><span>Другое время</span><input type="datetime-local" data-book-time></label><button class="btn primary" data-act="book">Записать клиента</button></div>` : ''}
     ${booked ? `<div class="note ok">${ic('calendar-check')}Записан: ${esc(branch(booked.branch).short)}, ${dayLabel(booked.ts)} в ${hm(booked.ts)}. Заявка уже у мастера точки.</div>` : ''}
     ${lead.status === 'converted' ? `<div class="note ok">${ic('check-circle-2')}Стала заказом</div>` : ''}
     ${lead.status === 'lost' ? `<div class="note bad">${ic('user-x')}Потеряна: клиент не дождался ответа</div>` : ''}
@@ -103,12 +103,16 @@ export function quoteText(lead, label, price) {
 // Общая обработка кнопок карточки
 export function bindLeadCard(root, rerender) {
   root.addEventListener('click', e => {
-    const btn = e.target.closest('[data-act]');
+    const btn = e.target.closest('[data-act], [data-quick]');
     if (!btn) return;
     const card = btn.closest('[data-lead]');
     if (!card) return;
     const lead = store.s.leads.find(l => l.id === card.dataset.lead);
     if (!lead) return;
+    if (btn.dataset.quick) {   // быстрая кнопка времени: филиал уже выбран в заявке
+      lead.branch = card.querySelector('[data-book-branch]')?.value || lead.branch;
+      bookLead(lead, +btn.dataset.quick, lead.branch); toast('Клиент записан'); rerender(); return;
+    }
     if (btn.dataset.act === 'take') { takeLead(lead); rerender(); }
     if (btn.dataset.act === 'confirm') { confirmReply(lead); toast('Ответ отмечен мастером'); rerender(); }
     if (btn.dataset.act === 'book') {
@@ -117,6 +121,7 @@ export function bindLeadCard(root, rerender) {
       lead.branch = card.querySelector('[data-book-branch]').value;
       bookLead(lead, ts, lead.branch); toast('Клиент записан'); rerender();
     }
+    if (btn.dataset.act === 'quote' && !lead.takenAt) takeLead(lead);   // отдельная кнопка «Взять» больше не обязательна
     if (btn.dataset.act === 'quote') {
       const r = card.querySelector(`input[name="q-${lead.id}"]:checked`);
       let price = +r?.dataset.price, label = r?.dataset.label || 'Стоимость';

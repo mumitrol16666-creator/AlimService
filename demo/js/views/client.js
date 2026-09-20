@@ -1,7 +1,7 @@
-import { BRANCHES, DEVICES, PROBLEMS, SOURCES } from '../data.js?v=202609201534';
-import { store, newLead, isOpen } from '../store.js?v=202609201534';
-import { esc, ic, icons, shrinkImage } from '../ui.js?v=202609201534';
-import { REQUEST_COPY, requestLang, saveRequestLang, modelLabel, modelValue, branchLabel, branchAddress } from '../request-copy.js?v=202609201534';
+import { BRANCHES, DEVICES, PROBLEMS, SOURCES } from '../data.js?v=202609201725';
+import { store, newLead, isOpen, whatsappUrl, countWhatsAppSkip, BRANCH_WHATSAPP } from '../store.js?v=202609201725';
+import { esc, ic, icons, shrinkImage } from '../ui.js?v=202609201725';
+import { REQUEST_COPY, requestLang, saveRequestLang, modelLabel, modelValue, branchLabel, branchAddress } from '../request-copy.js?v=202609201725';
 
 const languageSwitch = lang => `<div class="request-language" role="group" aria-label="${REQUEST_COPY[lang].language}"><button type="button" data-request-lang="ru" aria-pressed="${lang === 'ru'}" lang="ru">RU</button><button type="button" data-request-lang="kz" aria-pressed="${lang === 'kz'}" lang="kk">ҚАЗ</button></div>`;
 const sourceLabel = (key, lang) => key === 'walk' ? REQUEST_COPY[lang].walk : key === 'site' ? REQUEST_COPY[lang].site : SOURCES[key].label;
@@ -17,7 +17,7 @@ export function formMarkup(manual = false, lang = requestLang(), draft = {}) {
     <section class="request-section" aria-labelledby="device-title">
       <h2 id="device-title"><span class="request-number">01</span>${t.deviceStep}</h2>
       <fieldset class="request-brands"><legend class="sr-only">${t.deviceLabel}</legend>${Object.entries(DEVICES).map(([key,v]) => `<label><input type="radio" name="brand" value="${key}" ${checked(d.brand,key)}><span>${key === 'other' ? t.otherDevice : esc(v.label)}</span></label>`).join('')}</fieldset>
-      <label class="request-field"><span>${t.model} <em>*</em></span><input name="model" value="${esc(modelLabel(d.model,lang))}" placeholder="${t.modelHint}" maxlength="100" autocomplete="off" required aria-describedby="model-help"></label>
+      <label class="request-field"><span>${t.model} <small>· ${t.optional}</small></span><input name="model" value="${esc(modelLabel(d.model,lang))}" placeholder="${t.modelHint}" maxlength="100" autocomplete="off" aria-describedby="model-help"></label>
       <div class="model-suggestions" role="group" aria-label="${t.model}">${modelsMarkup(d.brand,d.model,lang)}</div>
       <p class="request-help" id="model-help">${t.modelHelp}</p>
       <fieldset class="problem-choices"><legend>${t.problem} <em>*</em></legend>${Object.entries(PROBLEMS).map(([key,v]) => `<label><input type="radio" name="problem" value="${key}" ${checked(d.problem,key)} required><span>${ic(v.icon)}${key === 'other' ? t.otherProblem : esc(v[lang])}</span></label>`).join('')}</fieldset>
@@ -29,6 +29,10 @@ export function formMarkup(manual = false, lang = requestLang(), draft = {}) {
       <div class="request-contact-grid"><label class="request-field"><span>${t.phone} <em>*</em></span><input name="phone" type="tel" required autocomplete="tel" placeholder="+7 700 000 00 00" value="${esc(d.phone)}" maxlength="24"><small>${t.phoneHelp}</small></label><label class="request-field"><span>${t.name} <small>· ${t.optional}</small></span><input name="name" autocomplete="given-name" placeholder="${t.nameHint}" maxlength="80" value="${esc(d.name)}"></label></div>
       ${manual ? `<fieldset class="request-sources"><legend>${t.source}</legend>${Object.keys(SOURCES).map(key => `<label><input type="radio" name="source" value="${key}" ${checked(d.source,key)}><span>${sourceLabel(key,lang)}</span></label>`).join('')}</fieldset>` : `<input type="hidden" name="source" value="${esc(d.source)}">`}
     </section>
+    <div class="request-skip">
+      <div><b>${t.skipTitle}</b><small>${t.skipText}</small></div>
+      <button type="button" class="btn wa" data-skip-wa>${ic('message-circle')}${t.skipBtn}</button>
+    </div>
     <div class="request-submit"><p class="request-error" role="alert" data-form-status></p><button class="btn primary lg" type="submit">${manual ? t.create : t.submit}${ic('arrow-up-right')}</button><p class="request-demo">${ic('info')}<span>${t.demo}</span></p></div>
   </form>`;
 }
@@ -78,6 +82,14 @@ export function bindRequestForm(root, done, manual = false, onLanguage = () => {
       form.querySelectorAll('[data-model]').forEach(b => b.setAttribute('aria-pressed',String(b===model)));
     }
     if (e.target.closest('[data-remove-photo]')) { form.elements.photo.value=''; refreshPhoto(form); }
+    if (e.target.closest('[data-skip-wa]')) {     // клиент может ничего не заполнять
+      const d = readDraft(form), t = REQUEST_COPY[form.dataset.lang];
+      const lines = [t.waHello];
+      if (d.model) lines.push(`${t.waDevice}: ${modelLabel(d.model, form.dataset.lang)}`);
+      if (d.problem) lines.push(`${t.waProblem}: ${PROBLEMS[d.problem][form.dataset.lang]}`);
+      countWhatsAppSkip();
+      window.open(whatsappUrl(BRANCH_WHATSAPP[d.branch] || BRANCH_WHATSAPP.default, lines.join('\n')), '_blank', 'noopener,noreferrer');
+    }
   });
   root.addEventListener('change', e => {
     const form = e.target.closest('#request-form'); if (!form || busy) return;
@@ -97,7 +109,6 @@ export function bindRequestForm(root, done, manual = false, onLanguage = () => {
     e.preventDefault(); if (busy) return;
     const form=e.target, d=readDraft(form), lang=form.dataset.lang, t=REQUEST_COPY[lang];
     const phone=d.phone.replace(/\D/g,'').replace(/^8(?=\d{10}$)/,'7');
-    if (!d.model) return showError(form,t.modelError,'model');
     if (!d.problem) return showError(form,t.problemError,'problem');
     if (!/^7\d{10}$/.test(phone)) return showError(form,t.phoneError,'phone');
     busy=true; const button=form.querySelector('[type=submit]'), before=button.innerHTML;
@@ -108,7 +119,7 @@ export function bindRequestForm(root, done, manual = false, onLanguage = () => {
       const photo=file?.size ? await shrinkImage(file) : null;
       if (file?.size && !photo) throw new Error(t.photoError);
       if (!form.isConnected) return;
-      const lead=newLead({ channel:d.source, lang, name:d.name.trim() || t.client, phone:'+'+phone, model:d.model, problem:d.problem, branch:d.branch, photo, when:'later', entry:manual ? 'manual' : 'form' });
+      const lead=newLead({ channel:d.source, lang, name:d.name.trim() || t.client, phone:'+'+phone, model:d.model || 'Не знаю модель', problem:d.problem, branch:d.branch, photo, when:'later', entry:manual ? 'manual' : 'form' });
       done(lead);
     } catch (err) { showError(form,err.message); }
     finally { busy=false; controls.forEach(c => c.disabled=false); button.innerHTML=before; icons(); }

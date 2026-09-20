@@ -1,5 +1,5 @@
-import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js?v=202609201534';
-import { BRAND } from './brand.js?v=202609201534';
+import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js?v=202609201725';
+import { BRAND } from './brand.js?v=202609201725';
 
 const KEY = `${BRAND.storagePrefix}-demo-v2`;
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
@@ -189,6 +189,8 @@ export function takeLead(lead) {
   if (!lead.takenAt) { lead.takenAt = now(); lead.takenBy = dutyToday().main.id; }
   store.save();
 }
+export const BRANCH_WHATSAPP = { default: '+7 778 004 91 04', nektar: '+7 778 004 91 04', mir: '+7 747 799 99 10', ah29: '+7 705 180 33 95', sh4: '+7 747 568 10 90' };
+export function countWhatsAppSkip() { state.waSkips = (state.waSkips || 0) + 1; store.save(); }
 export const whatsappUrl = (phone, text) => `https://wa.me/${phone.replace(/\D/g, '').replace(/^8(?=\d{10}$)/, '7')}?text=${encodeURIComponent(text)}`;
 export function openLeadWhatsApp(lead, text, price) {
   lead.quote = price; lead.draft = text; lead.whatsappOpenedAt = now(); store.save();
@@ -222,7 +224,7 @@ export function setStatus(order, st) {
   order.status = st;
   order.history.push({ st, ts: now() });
   if (st === 'issued') order.paidAt = now();
-  if (st === 'ready' || st === 'waiting' || st === 'work' || st === 'issued') notify(order, st);
+  if (st === 'ready' || st === 'issued') notify(order, st);   // промежуточные статусы клиенту не пишем
   store.save();
 }
 
