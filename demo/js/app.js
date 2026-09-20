@@ -1,10 +1,11 @@
-import { load, store, stats, dutyToday } from './store.js?v=202609200053';
-import { $, ic, icons, toast, modal } from './ui.js?v=202609200053';
-import * as client from './views/client.js?v=202609200053';
-import * as duty from './views/duty.js?v=202609200053';
-import * as master from './views/master.js?v=202609200053';
-import * as owner from './views/owner.js?v=202609200053';
-import * as receipt from './views/receipt.js?v=202609200053';
+import { load, store, stats, dutyToday } from './store.js?v=202609201534';
+import { $, ic, icons, toast, modal } from './ui.js?v=202609201534';
+import * as client from './views/client.js?v=202609201534';
+import * as duty from './views/duty.js?v=202609201534';
+import * as master from './views/master.js?v=202609201534';
+import * as owner from './views/owner.js?v=202609201534';
+import * as receipt from './views/receipt.js?v=202609201534';
+import { BRAND } from './brand.js?v=202609201534';
 
 const NAV = [
   ['home', 'Сценарий', 'play-circle'],
@@ -27,8 +28,8 @@ const home = {
     el.innerHTML = `
     <div class="home">
       <div class="home-h">
-        <div class="logo-xl"><span class="sheber-mark">S</span><div><b>Sheber</b><small>система для сервисных центров</small></div></div>
-        <div class="for">${ic('handshake')}Демо для <img src="img/alim-mark.svg" alt=""><b>Alim Service</b> · 4 филиала, Актобе</div>
+        <div class="logo-xl"><img class="brand-mark" src="${BRAND.mark}" alt=""><div><b>${BRAND.title}</b><small>${BRAND.tagline}</small></div></div>
+        <div class="for">${ic('monitor-smartphone')}Демонстрация · ${BRAND.subtitle}</div>
       </div>
       <h1>От заявки клиента до&nbsp;выданного телефона — в&nbsp;одной системе</h1>
       <p class="lead">Пройдите путь одного клиента. Демо работает в этом браузере: Telegram имитируется, WhatsApp открывается с текстом, отправляете вы.</p>
@@ -37,6 +38,7 @@ const home = {
         <a class="btn primary lg" href="#/client">${ic('play')}Начать показ</a>
         <button class="btn ghost" id="reset">${ic('rotate-ccw')}Сбросить демо-данные</button>
         <label class="switch"><input type="checkbox" id="ao" ${store.s.alwaysOpen ? 'checked' : ''}><i></i><span>Режим показа: считать, что сейчас рабочее время</span></label>
+        ${BRAND.showPlatform ? `<span class="by">by ${BRAND.platform}</span>` : ''}
         <span class="muted">В демо загружено ${st.orders.length} заказов и ${st.leads.length} заявок за 30 дней — данные примерные.</span>
       </div>
     </div>`;
@@ -55,9 +57,9 @@ let unmount = null;
 function shell() {
   $('#app').innerHTML = `
   <nav class="rail" id="rail">
-    <a class="rail-logo" href="#/home" title="Sheber"><span class="sheber-mark">S</span></a>
+    <a class="rail-logo" href="#/home" title="${BRAND.title}"><img class="brand-mark" src="${BRAND.mark}" alt=""></a>
     <div class="rail-nav">${NAV.map(([k, n, i]) => `<a href="#/${k}" data-nav="${k}">${ic(i)}<span>${n}</span><i class="bdg" data-bdg="${k}" hidden></i></a>`).join('')}</div>
-    <div class="rail-f"><span class="demo-tag">демо</span></div>
+    <div class="rail-f"><span class="demo-tag">демо</span>${BRAND.showPlatform ? `<span class="rail-by">by ${BRAND.platform}</span>` : ''}</div>
   </nav>
   <main id="view"></main>`;
   icons();

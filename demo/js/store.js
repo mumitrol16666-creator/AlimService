@@ -1,6 +1,7 @@
-import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js?v=202609200053';
+import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js?v=202609201534';
+import { BRAND } from './brand.js?v=202609201534';
 
-const KEY = 'sheber-demo-v2';
+const KEY = `${BRAND.storagePrefix}-demo-v2`;
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;
 
 let state;

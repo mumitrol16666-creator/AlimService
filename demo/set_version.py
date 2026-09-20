@@ -27,5 +27,5 @@ for d, _, files in os.walk(os.path.join(HERE, "js")):
 # точки входа в index.html
 sub(os.path.join(HERE, "index.html"), r'((?:href|src)="(?:css|js)/[^"?]+\.(?:css|js))(\?v=[^"]*)?"', rf'\g<1>?v={VER}"')
 # имя кэша service worker: новая версия — новый кэш
-sub(os.path.join(HERE, "sw.js"), r"const C = 'sheber-[^']*';", f"const C = 'sheber-{VER}';")
+sub(os.path.join(HERE, "sw.js"), r"const C = 'alim-crm-[^']*';", f"const C = 'alim-crm-{VER}';")
 print("версия демо:", VER)

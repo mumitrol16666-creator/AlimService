@@ -25,7 +25,7 @@ h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
 /* SHELL */
 #app{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100dvh}
 .rail{position:sticky;top:0;height:100dvh;background:var(--ink);color:#bdbdbd;display:flex;flex-direction:column;align-items:center;padding:16px 8px calc(14px + env(safe-area-inset-bottom));gap:18px;z-index:30}
-.sheber-mark{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:var(--yellow);color:var(--ink);font-family:var(--fh);font-weight:700;font-size:24px}
+.brand-mark{width:46px;height:46px;border-radius:14px;display:block}
 .rail-nav{display:flex;flex-direction:column;gap:6px;width:100%}
 .rail-nav a{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 4px;border-radius:14px;font-size:11.5px;font-weight:500;transition:background .15s,color .15s}
 .rail-nav a [data-lucide]{width:24px;height:24px}
@@ -34,6 +34,9 @@ h3{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
 .bdg{position:absolute;top:6px;right:14px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--orange);color:#fff;font-size:11.5px;font-weight:700;font-style:normal;display:grid;place-items:center}
 .bdg[hidden]{display:none}
 .rail-f{margin-top:auto}
+
+.by{font-size:13px;color:var(--muted);font-weight:600}
+.rail-by{display:block;margin-top:8px;font-size:10px;letter-spacing:.06em;color:#7a7a7a;text-align:center}
 .demo-tag{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;border:1px solid #3a3a3a;border-radius:99px;padding:4px 9px;color:#8a8a8a}
 .view{padding:26px 30px 60px;max-width:1320px;width:100%;min-width:0}
 body.public #app{grid-template-columns:1fr}
@@ -334,7 +337,7 @@ body.public .rail{display:none}
 .home{max-width:980px}
 .home-h{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:34px}
 .logo-xl{display:flex;align-items:center;gap:14px}
-.logo-xl .sheber-mark{width:56px;height:56px;font-size:30px;border-radius:17px}
+.logo-xl .brand-mark{width:56px;height:56px;border-radius:17px}
 .logo-xl b{display:block;font-family:var(--fh);font-size:24px;line-height:1.1}
 .for{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:8px 16px 8px 14px;font-size:14px}
 .for img{width:24px;height:24px}.for [data-lucide]{color:var(--orange)}
