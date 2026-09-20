@@ -1,11 +1,11 @@
-import { load, store, stats, dutyToday } from './store.js?v=202609201828';
-import { $, ic, icons, toast, modal } from './ui.js?v=202609201828';
-import * as client from './views/client.js?v=202609201828';
-import * as duty from './views/duty.js?v=202609201828';
-import * as master from './views/master.js?v=202609201828';
-import * as owner from './views/owner.js?v=202609201828';
-import * as receipt from './views/receipt.js?v=202609201828';
-import { BRAND } from './brand.js?v=202609201828';
+import { load, store, stats, dutyToday } from './store.js?v=202609201830';
+import { $, ic, icons, toast, modal } from './ui.js?v=202609201830';
+import * as client from './views/client.js?v=202609201830';
+import * as duty from './views/duty.js?v=202609201830';
+import * as master from './views/master.js?v=202609201830';
+import * as owner from './views/owner.js?v=202609201830';
+import * as receipt from './views/receipt.js?v=202609201830';
+import { BRAND } from './brand.js?v=202609201830';
 
 const NAV = [
   ['home', 'Сценарий', 'play-circle'],

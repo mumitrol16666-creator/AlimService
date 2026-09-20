@@ -1,5 +1,5 @@
-import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js?v=202609201828';
-import { BRAND } from './brand.js?v=202609201828';
+import { BRANCHES, STAFF, DUTY, DEVICES, PROBLEMS, FIRST_NAMES, priceFor } from './data.js?v=202609201830';
+import { BRAND } from './brand.js?v=202609201830';
 
 const KEY = `${BRAND.storagePrefix}-demo-v2`;
 const MIN = 60e3, HOUR = 60 * MIN, DAY = 24 * HOUR;

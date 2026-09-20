@@ -1,5 +1,5 @@
 // Client-facing request form. Internal language key stays `kz` for existing demo records.
-import { BRAND } from './brand.js?v=202609201828';
+import { BRAND } from './brand.js?v=202609201830';
 const KEY = `${BRAND.storagePrefix}-request-language`;
 export function requestLang() { try { return localStorage.getItem(KEY) === 'kz' ? 'kz' : 'ru'; } catch { return 'ru'; } }
 export function saveRequestLang(lang) { try { localStorage.setItem(KEY, lang); } catch {} }
